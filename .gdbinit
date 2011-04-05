@@ -341,12 +341,13 @@ Fetch function arguments (to be called after a function prolog)
 Usage: _getfunargap NAME [TYPE] INDEX
 Sets the variable $NAME to the INDEX-th argument of the function we're about to call
 Uses type TYPE if present, otherwise 'long'
-<index> is 0-based
+INDEX is 0-based
 end
 
 # ----------------------------------------------------------------------------------------------
 # Selector call information (only meant to be used when breaking on objc_msgSend)
 # ----------------------------------------------------------------------------------------------
+
 define sci
 if $argc == 0
     _getfunargbp _sci_self id 0
@@ -371,7 +372,34 @@ This command is only meant to be used when breaking on objc_msgSend. Append a st
 after the objc_msgSend prolog, or nothing before it
 end
 
-# TODO: mci (method call information), fci (function call information)
+# TODO: mci (method call information, x/y/z/w for argument types, up to 10), fci (function call information, x/y/z/w for argument types, up to 10)
+
+# ----------------------------------------------------------------------------------------------
+# Single argument extraction (only meant to be used when breaking on a function or method)
+# ----------------------------------------------------------------------------------------------
+
+define xa
+# Check the first argument
+if ($argc >= 1 && "$arg0"[0] != '/')
+    help xa
+else
+if $argc == 2
+    x $arg0 *(long *)($esp+4+4*$arg1)
+else
+if ($argc == 3 && (int)strcmp("$arg1", "*") == 0)
+    x $arg0 *(long *)($ebp+8+4*$arg2)
+else
+    help xa
+end
+end
+end
+end
+
+document xa
+Fetch a specific function argument, displaying it with the specified type. Add a * if you are
+looking at arguments after the prolog
+Usage: xa/TYPE [*] INDEX
+INDEX is 0-based. Do "help x" for more information about the types you can use.
+end
 
 
-# $eip == objc_msgSend
