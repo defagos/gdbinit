@@ -13,12 +13,13 @@ else
     help bpl
 end
 end
+
 document bpl
 List all breakpoints.
 end
 
 # ----------------------------------------------------------------------------------------------
-# Normal breakpoints
+# Standard breakpoints
 # ----------------------------------------------------------------------------------------------
 
 define bp
@@ -32,15 +33,16 @@ else
 end
 end
 end
+
 document bp
-Set breakpoint.
+Set a breakpoint.
 Usage: bp [LOCATION]
 LOCATION may be a line number, function name (before function prolog), or "*" 
 and an address (after function prolog).
 
 With no arg, uses current execution address of selected stack frame.
 
-To break on a symbol you must enclose symbol name inside "".
+To break on a symbol you must enclose the symbol name inside "".
 Example:
     bp "[NSControl stringValue]"
 Or else you can use the break command directly (break [NSControl stringValue])
@@ -63,13 +65,14 @@ else
 end
 end
 end
+
 document bpt
-Set temporary breakpoint.
+Set a temporary breakpoint.
 Usage: bpt [LOCATION]
 LOCATION may be a line number, function name (before function prolog), or "*" 
 and an address (after function prolog).
 
-With no arg, uses current execution address of selected stack frame.
+With no arg, uses the current execution address of selected stack frame.
 
 To break on a symbol you must enclose symbol name inside "".
 Example:
@@ -89,6 +92,7 @@ else
     help bpm
 end
 end
+
 document bpm
 Set a read/write breakpoint on EXPRESSION, e.g. *address.
 Usage: bpm EXPRESSION
@@ -112,13 +116,14 @@ else
 end
 end
 end
+
 document bph
 Set a hardware assisted breakpoint.
 Usage: bph [LOCATION]
 LOCATION may be a line number, function name (before function prolog), or "*" 
 and an address (after function prolog).
 
-To break on a symbol you must enclose symbol name inside "".
+To break on a symbol you must enclose the symbol name inside "".
 Example:
     bph "[NSControl stringValue]"
 Or else you can use the hb command directly (hb [NSControl stringValue])
@@ -141,8 +146,9 @@ else
 end
 end
 end
+
 document bpc
-Clear breakpoint.
+Clear a breakpoint.
 Usage: bpc [LOCATION]
 LOCATION may be a line number, function name (before function prolog), or "*" 
 and an address (after function prolog).
@@ -206,6 +212,7 @@ end
 end
 end
 end
+
 document bpe
 Enable breakpoints (all if none specified)
 Usage: bpe [NUM1] [NUM2] ... [NUM10]
@@ -264,6 +271,7 @@ end
 end
 end
 end
+
 document bpd
 Disable breakpoints (all if none specified)
 Usage: bpd [NUM1] [NUM2] ... [NUM10]
@@ -300,8 +308,9 @@ else
 end
 end
 end
+
 document _getfunargbp
-Fetches function arguments (to be called before a function prolog)
+Fetch function arguments (to be called before a function prolog)
 Usage: _getfunargbp NAME [TYPE] INDEX
 Sets the variable $NAME to the INDEX-th argument of the function we're about to call
 Uses type TYPE if present, otherwise 'long'
@@ -326,8 +335,9 @@ else
 end
 end
 end
+
 document _getfunargap
-Fetches function arguments (to be called after a function prolog)
+Fetch function arguments (to be called after a function prolog)
 Usage: _getfunargap NAME [TYPE] INDEX
 Sets the variable $NAME to the INDEX-th argument of the function we're about to call
 Uses type TYPE if present, otherwise 'long'
@@ -335,39 +345,30 @@ Uses type TYPE if present, otherwise 'long'
 end
 
 # ----------------------------------------------------------------------------------------------
-# Selector call information (to be used before the prolog of objc_msgSend)
+# Selector call information (only meant to be used when breaking on objc_msgSend)
 # ----------------------------------------------------------------------------------------------
-define scibp
+define sci
 if $argc == 0
-    _getfunargbp _scibp_self id 0
-    _getfunargbp _scibp_selector SEL 1
-    # Must be careful enough here NOT to use message sending (would be recursive!)
-    printf "Message %s sent to %p\n", $_scibp_selector, $_scibp_self
+    _getfunargbp _sci_self id 0
+    _getfunargbp _sci_selector SEL 1
 else
-    help scibp
+if ($argc == 1 && (int)strcmp("$arg0", "*") == 0)
+    _getfunargap _sci_self id 0
+    _getfunargap _sci_selector SEL 1    
+else
+    help sci
 end
-end
-document scibp
-Print information about the message and object passed to objc_msgSend. Must be called
-when breaking on objc_msgSend (before its prolog)
 end
 
-# ----------------------------------------------------------------------------------------------
-# Selector call information (to be used after the prolog of objc_msgSend)
-# ----------------------------------------------------------------------------------------------
-define sciap
-if $argc == 0
-    _getfunargap _sciap_self id 0
-    _getfunargap _sciap_selector SEL 1
-    # Must be careful enough here NOT to use message sending (would be recursive!)
-    printf "Message %s sent to %p\n", $_sciap_selector, $_sciap_self
-else
-    help sciap
+# Must be careful enough here NOT to use message sending (would be recursive!)
+printf "Message %s sent to %p\n", $_sci_selector, $_sci_self
 end
-end
-document sciap
-Print information about the message and object passed to objc_msgSend. Must be called
-when breaking on objc_msgSend (after its prolog)
+
+document sci
+Print information about the message and object passed to objc_msgSend. 
+Usage: sci [*]
+This command is only meant to be used when breaking on objc_msgSend. Append a star to the it 
+after the objc_msgSend prolog, or nothing before it
 end
 
 # TODO: mci (method call information), fci (function call information)
