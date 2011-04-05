@@ -299,10 +299,10 @@ set unwindonsignal on
 
 define _getfunargbp
 if $argc == 2
-    set $$arg0 = *(long*)($esp+4+4*$arg1)
+    set $$arg0 = *(long *)($esp+4+4*$arg1)
 else 
 if $argc == 3
-    set $$arg0 = *($arg1*)($esp+4+4*$arg2)
+    set $$arg0 = *($arg1 *)($esp+4+4*$arg2)
 else
     help _getfunargbp
 end
@@ -326,10 +326,10 @@ end
 
 define _getfunargap
 if $argc == 2
-    set $$arg0 = *(long*)($ebp+8+4*$arg1)
+    set $$arg0 = *(long *)($ebp+8+4*$arg1)
 else 
 if $argc == 3
-    set $$arg0 = *($arg1*)($ebp+8+4*$arg2) 
+    set $$arg0 = *($arg1 *)($ebp+8+4*$arg2) 
 else
     help _getfunargap
 end
@@ -361,7 +361,7 @@ end
 end
 
 # Must be careful enough here NOT to use message sending (would be recursive!)
-printf "Message %s sent to %p\n", $_sci_selector, $_sci_self
+printf "Message %s sent to <%s: %p>\n", $_sci_selector, (const char *)object_getClassName($_sci_self), $_sci_self
 end
 
 document sci
