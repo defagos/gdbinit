@@ -2,6 +2,10 @@
 # Breakpoint management 
 # **********************************************************************************************
 
+# ----------------------------------------------------------------------------------------------
+# Breakpoint list
+# ----------------------------------------------------------------------------------------------
+
 define bpl
     info breakpoints
 end
@@ -9,6 +13,8 @@ document bpl
 List all breakpoints.
 end
 
+# ----------------------------------------------------------------------------------------------
+# Normal breakpoints
 # ----------------------------------------------------------------------------------------------
 
 define bp
@@ -31,11 +37,13 @@ With no arg, uses current execution address of selected stack frame.
 To break on a symbol you must enclose symbol name inside "".
 Example:
     bp "[NSControl stringValue]"
-Or else you can use directly the break command (break [NSControl stringValue])
+Or else you can use the break command directly (break [NSControl stringValue])
 
 Do "help break" for more information.
 end
 
+# ----------------------------------------------------------------------------------------------
+# Temporary breakpoints
 # ----------------------------------------------------------------------------------------------
 
 define bpt
@@ -58,11 +66,59 @@ With no arg, uses current execution address of selected stack frame.
 To break on a symbol you must enclose symbol name inside "".
 Example:
     bpt "[NSControl stringValue]"
-Or else you can use directly the tbreak command (tbreak [NSControl stringValue])
+Or else you can use the tbreak command directly (tbreak [NSControl stringValue])
 
 Do "help tbreak" for more information.
 end
 
+# ----------------------------------------------------------------------------------------------
+# Memory breakpoints
+# ----------------------------------------------------------------------------------------------
+define bpm
+if $argc == 1
+    awatch $arg0
+else 
+    help bpm
+end
+end
+document bpm
+Set a read/write breakpoint on EXPRESSION, e.g. *address.
+Usage: bpm EXPRESSION
+A memory breakpoint stops execution of your program whenever the value of
+an expression is either read or written.
+
+Do "help awatch" for more information.
+end
+
+# ----------------------------------------------------------------------------------------------
+# Hardware assisted breakpoints
+# ----------------------------------------------------------------------------------------------
+define bph
+if $argc == 0
+    hb
+else 
+if $argc == 1
+    hb $arg0
+else
+    help bph
+end
+end
+end
+document bph
+Set a hardware assisted breakpoint.
+Usage: bph [LOCATION]
+LOCATION may be a line number, function name, or "*" and an address.
+
+To break on a symbol you must enclose symbol name inside "".
+Example:
+    bph "[NSControl stringValue]"
+Or else you can use the hb command directly (hb [NSControl stringValue])
+
+Do "help hb" for more information.
+end
+
+# ----------------------------------------------------------------------------------------------
+# Clearing breakpoints
 # ----------------------------------------------------------------------------------------------
 
 define bpc
@@ -83,10 +139,13 @@ LOCATION may be a line number, function name, or "*" and an address.
 With no argument, clears all breakpoints in the line that the selected frame
 is executing in.
 
-To clear a breakpoint using its number, use the delete (d) command.
+To clear a breakpoint using its number, use the delete (d) command instead.
 
+Do "help clear" for more information.
 end
 
+# ----------------------------------------------------------------------------------------------
+# Enabling breakpoints
 # ----------------------------------------------------------------------------------------------
 
 define bpe
@@ -139,8 +198,12 @@ end
 document bpe
 Enable breakpoints (all if none specified)
 Usage: bpe [NUM1] [NUM2] ... [NUM10]
+
+Do "help enable" for more information.
 end
 
+# ----------------------------------------------------------------------------------------------
+# Disabling breakpoints
 # ----------------------------------------------------------------------------------------------
 
 define bpd
@@ -193,4 +256,6 @@ end
 document bpd
 Disable breakpoints (all if none specified)
 Usage: bpd [NUM1] [NUM2] ... [NUM10]
+
+Do "help disable" for more information.
 end
