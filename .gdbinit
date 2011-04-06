@@ -15,7 +15,7 @@ end
 end
 
 document bpl
-List all breakpoints.
+List all currently defined breakpoints.
 end
 
 # ----------------------------------------------------------------------------------------------
@@ -35,17 +35,24 @@ end
 end
 
 document bp
-Set a breakpoint.
+Set a breakpoint at some location.
 Usage: bp [LOCATION]
-LOCATION may be a line number, a function name, or "*" followed by an address.
+LOCATION may be a line number, a function or method name, or "*" followed by an address.
+Method names must be specified between single quotes, and should be decorated with leading + 
+or -.
 
-If the function name is prefixed with a "*", the breakpoint will be put before
-the function prolog, otherwise it will be put at the end of the function prolog.
+If a function or method name is prefixed with a "*", the breakpoint will be put before
+the function or method prologue, otherwise it will be put after it.
 
 With no arg, the current execution address of the selected stack frame is used.
 
-To break on a symbol you must enclose the symbol name inside quotes, e.g.
-    bp "[NSControl stringValue]"
+Examples:
+    bp CFStringCreateWithFormat              Break on C function (after prologue)
+    bp *CFStringCreateWithFormat             Break on C function (before prologue)
+    bp '+[NSString stringWithFormat:]'       Break on Objective-C method (after prologue)
+    bp *'+[NSString stringWithFormat:]'      Break on Objective-C method (before prologue)
+    bp *0x1325dd0s                           Break on memory instruction at 0x1325dd0s
+    bp 17                                    Break on line 17 in current source file
 
 Do "help break" for more information.
 end
@@ -67,17 +74,24 @@ end
 end
 
 document bpt
-Set a temporary breakpoint.
+Set a temporary breakpoint at some location.
 Usage: bpt [LOCATION]
-LOCATION may be a line number, a function name, or "*" followed by an address.
+LOCATION may be a line number, a function or method name, or "*" followed by an address.
+Method names must be specified between single quotes, and should be decorated with leading + 
+or -.
 
-If the function name is prefixed with a "*", the breakpoint will be put before
-the function prolog, otherwise it will be put at the end of the function prolog.
+If a function or method name is prefixed with a "*", the breakpoint will be put before
+the function or method prologue, otherwise it will be put after it.
 
 With no arg, the current execution address of the selected stack frame is used.
 
-To break on a symbol you must enclose the symbol name inside quotes, e.g.
-    bpt "[NSControl stringValue]"
+Examples:
+    bpt CFStringCreateWithFormat             Break on C function (after prologue)
+    bpt *CFStringCreateWithFormat            Break on C function (before prologue)
+    bpt '+[NSString stringWithFormat:]'      Break on Objective-C method (after prologue)
+    bpt *'+[NSString stringWithFormat:]'     Break on Objective-C method (before prologue)
+    bpt *0x1325dd0s                          Break on memory instruction at 0x1325dd0s
+    bpt 17                                   Break on line 17 in current source file
 
 Do "help tbreak" for more information.
 end
@@ -94,10 +108,16 @@ end
 end
 
 document bpm
-Set a read/write breakpoint on EXPRESSION.
+Set a memory breakpoint (watchpoint) on some expression.
 Usage: bpm EXPRESSION
-A memory breakpoint stops execution of your program whenever the value of an 
-expression is either read or written.
+A memory breakpoint stops the execution of the program whenever the value of EXPRESSION is 
+either read or written.
+
+With no arg, the current execution address of the selected stack frame is used.
+
+Examples:
+    bpm *0x1325dd0s                          Watchpoint on memory instruction at 0x1325dd0s
+    bpm 17                                   Watchpoint on line 17 in current source file
 
 Do "help awatch" for more information.
 end
@@ -118,17 +138,24 @@ end
 end
 
 document bph
-Set a hardware assisted breakpoint.
+Set a hardware assisted breakpoint at some location.
 Usage: bph [LOCATION]
-LOCATION may be a line number, a function name, or "*" followed by an address.
+LOCATION may be a line number, a function or method name, or "*" followed by an address.
+Method names must be specified between single quotes, and should be decorated with leading + 
+or -.
 
-If the function name is prefixed with a "*", the breakpoint will be put before
-the function prolog, otherwise it will be put at the end of the function prolog.
+If a function or method name is prefixed with a "*", the breakpoint will be put before
+the function or method prologue, otherwise it will be put after it.
 
 With no arg, the current execution address of the selected stack frame is used.
 
-To break on a symbol you must enclose the symbol name inside quotes, e.g.
-    bph "[NSControl stringValue]"
+Examples:
+    bph CFStringCreateWithFormat             Break on C function (after prologue)
+    bph *CFStringCreateWithFormat            Break on C function (before prologue)
+    bph '+[NSString stringWithFormat:]'      Break on Objective-C method (after prologue)
+    bph *'+[NSString stringWithFormat:]'     Break on Objective-C method (before prologue)
+    bph *0x1325dd0s                          Break on memory instruction at 0x1325dd0s
+    bph 17                                   Break on line 17 in current source file
 
 Do "help hb" for more information.
 end
@@ -150,18 +177,24 @@ end
 end
 
 document bpc
-Clear a breakpoint.
+Clear all breakpoints at some location.
 Usage: bpc [LOCATION]
-LOCATION may be a line number, a function name, or "*" followed by an address.
+LOCATION may be a line number, a function or method name, or "*" followed by an address.
+Method names must be specified between single quotes, and should be decorated with leading + 
+or -.
 
-If the function name is prefixed with a "*", the breakpoint is searched before the
-function prolog, otherwise at its end.
+If a function or method name is prefixed with a "*", the breakpoint will be put before
+the function or method prologue, otherwise it will be put after it.
 
-With no argument, clears all breakpoints in the line that the selected frame
-is executing in.
+With no arg, the current execution address of the selected stack frame is used.
 
-To clear a breakpoint using its number (usually more convenient), use the delete (d) 
-command instead.
+Examples:
+    bpc CFStringCreateWithFormat             for C function breakpoints (after prologue)
+    bpc *CFStringCreateWithFormat            for C function breakpoints (before prologue)
+    bpc '+[NSString stringWithFormat:]'      for Objective-C method breakpoints (after prologue)
+    bpc *'+[NSString stringWithFormat:]'     for Objective-C method breakpoints (before prologue)
+    bpc *0x1325dd0s                          for breakpoints located on instruction at 0x1325dd0s
+    bpc 17                                   for breakpoints on line 17 in current source file
 
 Do "help clear" for more information.
 end
@@ -300,55 +333,29 @@ end
 set unwindonsignal on
 
 # ----------------------------------------------------------------------------------------------
-# Retrieving arguments before a function prolog
+# Retrieving arguments (only meant to be used before a function prologue)
 # ----------------------------------------------------------------------------------------------
 
 # TODO: Currently only i386 (& iOS simulator). Must deal with 64 bits & iOS device as well!
 
-define _getfunargbp
+define _getfunarg
 if $argc == 2
-    set $$arg0 = *(long *)($esp+4+4*$arg1)
+    set $$arg0 = *(int *)($esp+4+4*$arg1)
 else 
 if $argc == 3
     set $$arg0 = *($arg1 *)($esp+4+4*$arg2)
 else
-    help _getfunargbp
+    help _getfunarg
 end
 end
 end
 
-document _getfunargbp
-Fetch function arguments (to be called before a function prolog)
-Usage: _getfunargbp NAME [TYPE] INDEX
+document _getfunarg
+(For private use) Fetch function arguments (to be called before a function prologue)
+Usage: _getfunarg NAME [TYPE] INDEX
 Sets the variable $NAME to the INDEX-th argument of the function we're about to call
-Uses type TYPE if present, otherwise 'long'
+Uses type TYPE if present, otherwise 'int'
 <index> is 0-based
-end
-
-# ----------------------------------------------------------------------------------------------
-# Retrieving arguments after a function prolog
-# ---------------------------------------------------------------------------------------------
-
-# TODO: Currently only i386 (& iOS simulator). Must deal with 64 bits & iOS device as well!
-
-define _getfunargap
-if $argc == 2
-    set $$arg0 = *(long *)($ebp+8+4*$arg1)
-else 
-if $argc == 3
-    set $$arg0 = *($arg1 *)($ebp+8+4*$arg2) 
-else
-    help _getfunargap
-end
-end
-end
-
-document _getfunargap
-Fetch function arguments (to be called after a function prolog)
-Usage: _getfunargap NAME [TYPE] INDEX
-Sets the variable $NAME to the INDEX-th argument of the function we're about to call
-Uses type TYPE if present, otherwise 'long'
-INDEX is 0-based
 end
 
 # ----------------------------------------------------------------------------------------------
@@ -357,26 +364,20 @@ end
 
 define sci
 if $argc == 0
-    _getfunargbp _sci_self id 0
-    _getfunargbp _sci_selector SEL 1
-else
-if ($argc == 1 && (int)strcmp("$arg0", "*") == 0)
-    _getfunargap _sci_self id 0
-    _getfunargap _sci_selector SEL 1    
+    _getfunarg _sci_self id 0
+    _getfunarg _sci_selector SEL 1   
+    
+    # Must be careful enough here NOT to use message sending (would be recursive!)
+    printf "Message %s sent to <%s: %p>\n", $_sci_selector, (const char *)object_getClassName($_sci_self), $_sci_self
 else
     help sci
 end
 end
 
-# Must be careful enough here NOT to use message sending (would be recursive!)
-printf "Message %s sent to <%s: %p>\n", $_sci_selector, (const char *)object_getClassName($_sci_self), $_sci_self
-end
-
 document sci
-Print information about the message and object passed to objc_msgSend. 
-Usage: sci [*]
-This command is only meant to be used when breaking on objc_msgSend. Append a star to the it 
-after the objc_msgSend prolog, or nothing before it
+Print information about the message and object passed to objc_msgSend
+Usage: sci
+This command is only meant to be used when breaking on objc_msgSend
 end
 
 # TODO: mci (method call information, x/y/z/w for argument types, up to 10), fci (function call information, x/y/z/w for argument types, up to 10)
@@ -391,10 +392,10 @@ if ($argc >= 1 && "$arg0"[0] != '/')
     help xa
 else
 if $argc == 2
-    x $arg0 *(long *)($esp+4+4*$arg1)
+    x $arg0 *(int *)($esp+4+4*$arg1)
 else
 if ($argc == 3 && (int)strcmp("$arg1", "*") == 0)
-    x $arg0 *(long *)($ebp+8+4*$arg2)
+    x $arg0 *(int *)($ebp+8+4*$arg2)
 else
     help xa
 end
@@ -404,7 +405,7 @@ end
 
 document xa
 Fetch a specific function argument, displaying it with the specified type. Add a * if you are
-looking at arguments after the prolog
+looking at arguments after the prologue
 Usage: xa/TYPE [*] INDEX
 INDEX is 0-based. Do "help x" for more information about the types you can use.
 end
