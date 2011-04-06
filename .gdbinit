@@ -37,15 +37,15 @@ end
 document bp
 Set a breakpoint.
 Usage: bp [LOCATION]
-LOCATION may be a line number, function name (before function prolog), or "*" 
-and an address (after function prolog).
+LOCATION may be a line number, a function name, or "*" followed by an address.
 
-With no arg, uses current execution address of selected stack frame.
+If the function name is prefixed with a "*", the breakpoint will be put before
+the function prolog, otherwise it will be put at the end of the function prolog.
 
-To break on a symbol you must enclose the symbol name inside "".
-Example:
+With no arg, the current execution address of the selected stack frame is used.
+
+To break on a symbol you must enclose the symbol name inside quotes, e.g.
     bp "[NSControl stringValue]"
-Or else you can use the break command directly (break [NSControl stringValue])
 
 Do "help break" for more information.
 end
@@ -69,15 +69,15 @@ end
 document bpt
 Set a temporary breakpoint.
 Usage: bpt [LOCATION]
-LOCATION may be a line number, function name (before function prolog), or "*" 
-and an address (after function prolog).
+LOCATION may be a line number, a function name, or "*" followed by an address.
 
-With no arg, uses the current execution address of selected stack frame.
+If the function name is prefixed with a "*", the breakpoint will be put before
+the function prolog, otherwise it will be put at the end of the function prolog.
 
-To break on a symbol you must enclose symbol name inside "".
-Example:
+With no arg, the current execution address of the selected stack frame is used.
+
+To break on a symbol you must enclose the symbol name inside quotes, e.g.
     bpt "[NSControl stringValue]"
-Or else you can use the tbreak command directly (tbreak [NSControl stringValue])
 
 Do "help tbreak" for more information.
 end
@@ -94,10 +94,10 @@ end
 end
 
 document bpm
-Set a read/write breakpoint on EXPRESSION, e.g. *address.
+Set a read/write breakpoint on EXPRESSION.
 Usage: bpm EXPRESSION
-A memory breakpoint stops execution of your program whenever the value of
-an expression is either read or written.
+A memory breakpoint stops execution of your program whenever the value of an 
+expression is either read or written.
 
 Do "help awatch" for more information.
 end
@@ -120,13 +120,15 @@ end
 document bph
 Set a hardware assisted breakpoint.
 Usage: bph [LOCATION]
-LOCATION may be a line number, function name (before function prolog), or "*" 
-and an address (after function prolog).
+LOCATION may be a line number, a function name, or "*" followed by an address.
 
-To break on a symbol you must enclose the symbol name inside "".
-Example:
+If the function name is prefixed with a "*", the breakpoint will be put before
+the function prolog, otherwise it will be put at the end of the function prolog.
+
+With no arg, the current execution address of the selected stack frame is used.
+
+To break on a symbol you must enclose the symbol name inside quotes, e.g.
     bph "[NSControl stringValue]"
-Or else you can use the hb command directly (hb [NSControl stringValue])
 
 Do "help hb" for more information.
 end
@@ -150,13 +152,16 @@ end
 document bpc
 Clear a breakpoint.
 Usage: bpc [LOCATION]
-LOCATION may be a line number, function name (before function prolog), or "*" 
-and an address (after function prolog).
+LOCATION may be a line number, a function name, or "*" followed by an address.
+
+If the function name is prefixed with a "*", the breakpoint is searched before the
+function prolog, otherwise at its end.
 
 With no argument, clears all breakpoints in the line that the selected frame
 is executing in.
 
-To clear a breakpoint using its number, use the delete (d) command instead.
+To clear a breakpoint using its number (usually more convenient), use the delete (d) 
+command instead.
 
 Do "help clear" for more information.
 end
@@ -284,6 +289,10 @@ end
 # Objective-C
 # **********************************************************************************************
 
+# Some usual references:
+#     http://www.clarkcox.com/blog/2009/02/04/inspecting-obj-c-parameters-in-gdb/
+#     http://developer.apple.com/library/ios/#technotes/tn2239/_index.html
+
 # ----------------------------------------------------------------------------------------------
 # Globals
 # ----------------------------------------------------------------------------------------------
@@ -293,7 +302,6 @@ set unwindonsignal on
 # ----------------------------------------------------------------------------------------------
 # Retrieving arguments before a function prolog
 # ----------------------------------------------------------------------------------------------
-# See http://www.clarkcox.com/blog/2009/02/04/inspecting-obj-c-parameters-in-gdb/
 
 # TODO: Currently only i386 (& iOS simulator). Must deal with 64 bits & iOS device as well!
 
@@ -319,8 +327,7 @@ end
 
 # ----------------------------------------------------------------------------------------------
 # Retrieving arguments after a function prolog
-# ----------------------------------------------------------------------------------------------
-# See http://www.clarkcox.com/blog/2009/02/04/inspecting-obj-c-parameters-in-gdb/
+# ---------------------------------------------------------------------------------------------
 
 # TODO: Currently only i386 (& iOS simulator). Must deal with 64 bits & iOS device as well!
 
