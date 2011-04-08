@@ -422,7 +422,7 @@ define mci
         # Refer to http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html
         # for type encodings
         set $_mci_arg_type = (char *)method_copyArgumentType($_mci_method, $_mci_arg_index)
-        set $_mci_method_arg_index = $_mci_arg_index - 2
+        set $_mci_method_arg_index = $_mci_arg_index - 1
         
         # Object information
         if $_mci_arg_type[0] == '@'
@@ -462,10 +462,46 @@ define mci
             
             # Done with the buffer
             call (void)free($_mci_cstr_buffer)
-        # Decimal value
+        # Int
         else
-        if (const char *)strchr("islqISLQ", $_mci_arg_type[0])
-            printf "\tArg %2d is a decimal value\n", $_mci_method_arg_index
+        if $_mci_arg_type[0] == 'i'
+            _get_fun_arg_adr _mci_pArg int $_mci_arg_index
+            printf "\tArg %2d: int: (d)%d (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
+        # Short
+        else
+        if $_mci_arg_type[0] == 's'
+            _get_fun_arg_adr _mci_pArg short $_mci_arg_index
+            printf "\tArg %2d: short: (d)%d (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg            
+        # Long
+        else
+        if $_mci_arg_type[0] == 'l'
+            _get_fun_arg_adr _mci_pArg long $_mci_arg_index
+            printf "\tArg %2d: long: (d)%d (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
+        # Long long
+        else
+        if $_mci_arg_type[0] == 'q'
+            _get_fun_arg_adr _mci_pArg 'long long' $_mci_arg_index
+            printf "\tArg %2d: long long: (d)%d (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
+        # Unsigned int
+        else
+        if $_mci_arg_type[0] == 'I'
+            _get_fun_arg_adr _mci_pArg 'unsigned int' $_mci_arg_index
+            printf "\tArg %2d: unsigned int: (d)%u (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
+        # Unsigned short
+        else
+        if $_mci_arg_type[0] == 'S'
+            _get_fun_arg_adr _mci_pArg 'unsigned short' $_mci_arg_index
+            printf "\tArg %2d: unsigned short: (d)%u (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
+        # Unsigned long
+        else
+        if $_mci_arg_type[0] == 'L'
+            _get_fun_arg_adr _mci_pArg 'unsigned long' $_mci_arg_index
+            printf "\tArg %2d: unsigned long: (d)%u (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
+        # Unsigned long long
+        else
+        if $_mci_arg_type[0] == 'Q'
+            _get_fun_arg_adr _mci_pArg 'unsigned long long' $_mci_arg_index
+            printf "\tArg %2d: unsigned long long: (d)%u (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg            
         # Character
         else
         if (const char *)strchr("cC", $_mci_arg_type[0])
@@ -517,6 +553,13 @@ define mci
         # Unknown
         else
             printf "\tArg %2d has an unknown type\n", $_mci_method_arg_index
+        end
+        end
+        end
+        end
+        end
+        end
+        end
         end
         end
         end
