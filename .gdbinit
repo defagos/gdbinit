@@ -338,37 +338,38 @@ set unwindonsignal on
 
 # TODO: Currently only i386 (& iOS simulator). Must deal with 64 bits & iOS device as well!
 
-define _getfunarg
+define _get_fun_arg_adr
 if $argc == 2
-    set $$arg0 = *(int *)($esp+4+4*$arg1)
+    set $$arg0 = (int *)($esp+4+4*$arg1)
 else 
 if $argc == 3
-    set $$arg0 = *($arg1 *)($esp+4+4*$arg2)
+    set $$arg0 = ($arg1 *)($esp+4+4*$arg2)
 else
-    help _getfunarg
+    help _get_fun_arg_adr
 end
 end
 end
 
-document _getfunarg
-(For private use) Fetch function arguments (to be called before a function prologue)
-Usage: _getfunarg OUTPUT_VAR_NAME [TYPE] INDEX
-Sets the variable $OUTPUT_VAR_NAME to the INDEX-th argument of the function we're about to call
+document _get_fun_arg_adr
+(For private use) Fetch function arguments addresses (this command must called before a function 
+prologue)
+Usage: _get_fun_arg_adr OUTPUT_VAR_NAME [TYPE] INDEX
+Sets the variable $OUTPUT_VAR_NAME to the address of the INDEX-th argument of the function
 Uses type TYPE if present, otherwise 'int'
 INDEX is 0-based
 end
 
 # ----------------------------------------------------------------------------------------------
-# Selector call information (only meant to be used when breaking on objc_msgSend)
+# Selector call information
 # ----------------------------------------------------------------------------------------------
 
 define sci
 if $argc == 0
-    _getfunarg _sci_self id 0
-    _getfunarg _sci_selector SEL 1   
+    _get_fun_arg_adr _sci_self id 0
+    _get_fun_arg_adr _sci_selector SEL 1   
     
     # Must be careful enough here NOT to use message sending (would be recursive!)
-    printf "Message %s sent to <%s: %p>\n", $_sci_selector, (const char *)object_getClassName($_sci_self), $_sci_self
+    printf "Message %s sent to <%s: %p>\n", *$_sci_selector, (const char *)object_getClassName(*$_sci_self), *$_sci_self
 else
     help sci
 end
@@ -377,10 +378,20 @@ end
 document sci
 Print information about the message and object passed to objc_msgSend
 Usage: sci
-This command is only meant to be used when breaking on objc_msgSend
+This command is meant to be used when breaking on objc_msgSend, a method call or when EXC_BAD_ACCESS
+is encountered
 end
 
-# TODO: mci (method call information, x/y/z/w for argument types, up to 10), fci (function call information, x/y/z/w for argument types, up to 10)
+# ----------------------------------------------------------------------------------------------
+# Method information (only meant to be used before a method prologue)
+# ----------------------------------------------------------------------------------------------
+
+define mci
+
+end
+document mci
+
+end
 
 # ----------------------------------------------------------------------------------------------
 # Single argument extraction (only meant to be used when breaking on a function or method)
@@ -388,25 +399,20 @@ end
 
 define xa
 # Check the first argument
-if ($argc >= 1 && "$arg0"[0] != '/')
-    help xa
-else
-if $argc == 2
-    x $arg0 (int *)($esp+4+4*$arg1)
-else
-if ($argc == 3 && (int)strcmp("$arg1", "*") == 0)
-    x $arg0 (int *)($ebp+8+4*$arg2)
+if ($argc == 2 && "$arg0"[0] == '/')
+    # No type argument to _get_fun_arg_adr. Only interested in the address, cast will be made
+    # by x/<type> below
+    _get_fun_arg_adr _xa_arg $arg1
+    x $arg0 $_xa_arg
 else
     help xa
-end
-end
 end
 end
 
 document xa
 Fetch a specific function argument, displaying it with the specified type. Add a * if you are
 looking at arguments after the prologue
-Usage: xa/TYPE [*] INDEX
+Usage: xa/TYPE INDEX
 INDEX is 0-based. Do "help x" for more information about the types you can use.
 end
 
