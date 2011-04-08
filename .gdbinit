@@ -365,11 +365,19 @@ end
 
 define sci
 if $argc == 0
-    _get_fun_arg_adr _sci_self id 0
-    _get_fun_arg_adr _sci_selector SEL 1   
+    # Deal with prototypes having id as first argument and SEL as second one. This is the case
+    # for 
+    #     objc_msgSend(id self, SEL op, ...)
+    # as well as any Objective-C method implementation:
+    #     typedef id (*IMP)(id, SEL, ...); 
+    # Using the sci command, we can therefore get information about the selector which is called
+    # when we stop on on objc_msgSend, but also when we stop on any Objective-C method call. Nice,
+    # isn't it?
+    _get_fun_arg_adr _sci_pSelf id 0
+    _get_fun_arg_adr _sci_pSelector SEL 1   
     
     # Must be careful enough here NOT to use message sending (would be recursive!)
-    printf "Message %s sent to <%s: %p>\n", *$_sci_selector, (const char *)object_getClassName(*$_sci_self), *$_sci_self
+    printf "Message %s sent to <%s: %p>\n", *$_sci_pSelector, (const char *)object_getClassName(*$_sci_pSelf), *$_sci_pSelf
 else
     help sci
 end
@@ -379,7 +387,7 @@ document sci
 Print information about the message and object passed to objc_msgSend
 Usage: sci
 This command is meant to be used when breaking on objc_msgSend, a method call or when EXC_BAD_ACCESS
-is encountered
+is encountered (usually breaking in objc_msgSend)
 end
 
 # ----------------------------------------------------------------------------------------------
@@ -387,10 +395,38 @@ end
 # ----------------------------------------------------------------------------------------------
 
 define mci
-
+    # Whe setting breakpoints on Objective-C methods, we in fact break on the C-function implementing
+    # them. Those all have a prototype given by
+    #     typedef id (*IMP)(id, SEL, ...)
+    _get_fun_arg_adr _mci_pSelf id 0
+    _get_fun_arg_adr _mci_pSelector SEL 1
+    
+    # Retrieve the class and method information from the Objective-C runtime
+    set $_mci_class = (Class)object_getClass(*$_mci_pSelf)
+    
+    # Class or instance method?
+    if ((int)class_isMetaClass($_mci_class))
+        set $_mci_method = (Method)class_getClassMethod($_mci_class, *$_mci_pSelector)
+        printf "Calling method +[%s %s]\n", (const char *)object_getClassName(*$_mci_pSelf), (SEL)method_getName($_mci_method)
+    else
+        set $_mci_method = (Method)class_getInstanceMethod($_mci_class, *$_mci_pSelector)
+        printf "Calling method -[%s %s]\n", (const char *)object_getClassName(*$_mci_pSelf), (SEL)method_getName($_mci_method)
+    end
+        
+    # Display the arguments (remark: an ellipsis in an argument list is not included in
+    # the return value of method_getNumberOfArguments)
+    set $_mci_method_nbr_args = (unsigned int)method_getNumberOfArguments($_mci_method) 
+    # Begin with the third argument (the first are id and SEL)
+    set $_mci_arg_index = 2
+    while ($_mci_method_nbr_args - $_mci_arg_index)
+        # Refer to http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html
+        # for type encodings
+        set $_mci_arg_type = (char *)method_copyArgumentType($_mci_method, $_mci_arg_index)
+        printf "Type of arg %d is %s\n", $_mci_arg_index - 2, $_mci_arg_type
+        set $_mci_arg_index = $_mci_arg_index + 1
+    end
 end
 document mci
-
 end
 
 # ----------------------------------------------------------------------------------------------
@@ -402,8 +438,8 @@ define xa
 if ($argc == 2 && "$arg0"[0] == '/')
     # No type argument to _get_fun_arg_adr. Only interested in the address, cast will be made
     # by x/<type> below
-    _get_fun_arg_adr _xa_arg $arg1
-    x $arg0 $_xa_arg
+    _get_fun_arg_adr _xa_pArg $arg1
+    x $arg0 $_xa_pArg
 else
     help xa
 end
