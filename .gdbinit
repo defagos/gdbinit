@@ -322,7 +322,7 @@ end
 # Objective-C
 # **********************************************************************************************
 
-# Some usual references:
+# Some useful references:
 #     http://www.clarkcox.com/blog/2009/02/04/inspecting-obj-c-parameters-in-gdb/
 #     http://developer.apple.com/library/ios/#technotes/tn2239/_index.html
 
@@ -352,10 +352,10 @@ end
 
 document _getfunarg
 (For private use) Fetch function arguments (to be called before a function prologue)
-Usage: _getfunarg NAME [TYPE] INDEX
-Sets the variable $NAME to the INDEX-th argument of the function we're about to call
+Usage: _getfunarg OUTPUT_VAR_NAME [TYPE] INDEX
+Sets the variable $OUTPUT_VAR_NAME to the INDEX-th argument of the function we're about to call
 Uses type TYPE if present, otherwise 'int'
-<index> is 0-based
+INDEX is 0-based
 end
 
 # ----------------------------------------------------------------------------------------------
@@ -392,10 +392,10 @@ if ($argc >= 1 && "$arg0"[0] != '/')
     help xa
 else
 if $argc == 2
-    x $arg0 *(int *)($esp+4+4*$arg1)
+    x $arg0 (int *)($esp+4+4*$arg1)
 else
 if ($argc == 3 && (int)strcmp("$arg1", "*") == 0)
-    x $arg0 *(int *)($ebp+8+4*$arg2)
+    x $arg0 (int *)($ebp+8+4*$arg2)
 else
     help xa
 end
