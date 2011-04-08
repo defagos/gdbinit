@@ -424,64 +424,75 @@ define mci
         set $_mci_arg_type = (char *)method_copyArgumentType($_mci_method, $_mci_arg_index)
         set $_mci_method_arg_index = $_mci_arg_index - 2
         
-        # Object
+        # Object information
         if $_mci_arg_type[0] == '@'
-            printf "Arg %d is an object\n", $_mci_method_arg_index
+            _get_fun_arg_adr _mci_pArg id $_mci_arg_index
+            
+            # Show a preview of the object description method. No danger of recursion here: The description,
+            # substringToIndex: and UTF8String methods cannot get here since they do not have an object in
+            # their parameter list!
+            # TODO: Test length; if >=, no truncation, otherwise print truncation followed by [truncated]
+            # TODO: Replace \n by visible \n
+            # set $_mci_arg_description_preview = (const char *)[(NSString *)[(NSString *)[*$_mci_pArg description] substringToIndex:80] UTF8String]
+            set $_mci_arg_description_preview = (const char *)[[*$_mci_pArg description] UTF8String]
+            
+            printf "\tArg %2d: <%s: %p>: Description: %s\n", $_mci_method_arg_index, (const char *)object_getClassName(*$_mci_pArg), *$_mci_pArg, $_mci_arg_description_preview
+            
         # Decimal value
         else
         if (const char *)strchr("islqISLQ", $_mci_arg_type[0])
-            printf "Arg %d is a decimal value\n", $_mci_method_arg_index
+            printf "\tArg %2d is a decimal value\n", $_mci_method_arg_index
         # Character
         else
         if (const char *)strchr("cC", $_mci_arg_type[0])
-            printf "Arg %d is a character\n", $_mci_method_arg_index
+            printf "\tArg %2d is a character\n", $_mci_method_arg_index
         # Floating point value
         else
         if (const char *)strchr("fd", $_mci_arg_type[0])
-            printf "Arg %d is an floating-point value\n", $_mci_method_arg_index
+            printf "\tArg %2d is an floating-point value\n", $_mci_method_arg_index
         # Boolean value
         else
         if $_mci_arg_type[0] == 'B'
-            printf "Arg %d is a boolean\n", $_mci_method_arg_index
+            printf "\tArg %2d is a boolean\n", $_mci_method_arg_index
         # Pointer
         else
         if $_mci_arg_type[0] == '^'
-            printf "Arg %d is a pointer\n", $_mci_method_arg_index
+            printf "\tArg %2d is a pointer\n", $_mci_method_arg_index
         # C-string
         else
         if $_mci_arg_type[0] == '*'
-            printf "Arg %d is a C-string\n", $_mci_method_arg_index
+            printf "\tArg %2d is a C-string\n", $_mci_method_arg_index
         # C-array
         else
         if $_mci_arg_type[0] == '['
-            printf "Arg %d is a C-array\n", $_mci_method_arg_index
+            printf "\tArg %2d is a C-array\n", $_mci_method_arg_index
         # C-struct
         else
         if $_mci_arg_type[0] == '{'
-            printf "Arg %d is a C-struct\n", $_mci_method_arg_index
+            printf "\tArg %2d is a C-struct\n", $_mci_method_arg_index
         # Union
         else
         if $_mci_arg_type[0] == '('
-            printf "Arg %d is a union\n", $_mci_method_arg_index
+            printf "\tArg %2d is a union\n", $_mci_method_arg_index
         # Class object
         else
         if $_mci_arg_type[0] == '#'
-            printf "Arg %d is a class\n", $_mci_method_arg_index
+            printf "\tArg %2d is a class\n", $_mci_method_arg_index
         # Selector
         else
         if $_mci_arg_type[0] == ':'
-            printf "Arg %d is a selector\n", $_mci_method_arg_index
+            printf "\tArg %2d is a selector\n", $_mci_method_arg_index
         # Selector
         else
         if $_mci_arg_type[0] == 'b'
-            printf "Arg %d is a bit field\n", $_mci_method_arg_index
+            printf "\tArg %2d is a bit field\n", $_mci_method_arg_index
         # Void
         else
         if $_mci_arg_type[0] == 'v'
-            printf "Arg %d is void\n", $_mci_method_arg_index  
+            printf "\tArg %2d is void\n", $_mci_method_arg_index  
         # Unknown
         else
-            printf "Arg %d has an unknown type\n", $_mci_method_arg_index
+            printf "\tArg %2d has an unknown type\n", $_mci_method_arg_index
         end
         end
         end
