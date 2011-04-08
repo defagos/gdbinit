@@ -428,16 +428,40 @@ define mci
         if $_mci_arg_type[0] == '@'
             _get_fun_arg_adr _mci_pArg id $_mci_arg_index
             
-            # Show a preview of the object description method. No danger of recursion here: The description,
-            # substringToIndex: and UTF8String methods cannot get here since they do not have an object in
-            # their parameter list!
-            # TODO: Test length; if >=, no truncation, otherwise print truncation followed by [truncated]
-            # TODO: Replace \n by visible \n
-            # set $_mci_arg_description_preview = (const char *)[(NSString *)[(NSString *)[*$_mci_pArg description] substringToIndex:80] UTF8String]
-            set $_mci_arg_description_preview = (const char *)[[*$_mci_pArg description] UTF8String]
+            # Show a preview of the object description method. We can call Objective-C methods here, but only
+            # if they have no object as parameter (otherwise we might create a recursion if mci is applied on
+            # for inspecting a method we use here!). Otherwise, we must rely on C-functions
+            set $_mci_arg_description_preview = (const char *)[(NSString *)[*$_mci_pArg description] UTF8String]
             
-            printf "\tArg %2d: <%s: %p>: Description: %s\n", $_mci_method_arg_index, (const char *)object_getClassName(*$_mci_pArg), *$_mci_pArg, $_mci_arg_description_preview
+            # Truncate the description if too long; we must work with a separate buffer
+            set $_mci_cstr_buffer_truncated = 0
+            set $_mci_cstr_buffer_length = (size_t)strlen($_mci_arg_description_preview)
+            if $_mci_cstr_buffer_length > 200
+                set $_mci_cstr_buffer_truncated = 1
+                set $_mci_cstr_buffer_length = 200
+            end
             
+            # Allocate and fill the buffer
+            set $_mci_cstr_buffer = (char *)calloc(sizeof(char) * ($_mci_cstr_buffer_length + 1))
+            # Trick: We do not use call here since it would print the result to the console!
+            set $_mci_cstr_buffer = (char *)strncpy($_mci_cstr_buffer, $_mci_arg_description_preview, 200)
+            
+            # Truncate all lines except the first one
+            set $_mci_buffer_cr_pos = (char *)strchr($_mci_cstr_buffer, '\n')
+            if $_mci_buffer_cr_pos
+                set $_mci_cstr_buffer_truncated = 1
+                set *$_mci_buffer_cr_pos = '\0'
+            end
+            
+            # Display the (maybe truncated) description
+            if $_mci_cstr_buffer_truncated
+                printf "\tArg %2d: <%s: %p>: Description: %s (truncated: call 'po [%p description]' to get the full version)\n", $_mci_method_arg_index, (const char *)object_getClassName(*$_mci_pArg), *$_mci_pArg, $_mci_cstr_buffer, *$_mci_pArg
+            else
+                printf "\tArg %2d: <%s: %p>: Description: %s\n", $_mci_method_arg_index, (const char *)object_getClassName(*$_mci_pArg), *$_mci_pArg, $_mci_arg_description_preview
+            end
+            
+            # Done with the buffer
+            call (void)free($_mci_cstr_buffer)
         # Decimal value
         else
         if (const char *)strchr("islqISLQ", $_mci_arg_type[0])
