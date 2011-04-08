@@ -351,7 +351,7 @@ end
 end
 
 document _get_fun_arg_adr
-(For private use) Fetch function arguments addresses (this command must called before a function 
+(For internal use) Fetch function arguments addresses (this command must called before a function 
 prologue)
 Usage: _get_fun_arg_adr OUTPUT_VAR_NAME [TYPE] INDEX
 Sets the variable $OUTPUT_VAR_NAME to the address of the INDEX-th argument of the function
@@ -371,7 +371,7 @@ if $argc == 0
     # as well as any Objective-C method implementation:
     #     typedef id (*IMP)(id, SEL, ...); 
     # Using the sci command, we can therefore get information about the selector which is called
-    # when we stop on on objc_msgSend, but also when we stop on any Objective-C method call. Nice,
+    # when we stop on on objc_msgSend, but  also when we stop on any Objective-C method call. Nice,
     # isn't it?
     _get_fun_arg_adr _sci_pSelf id 0
     _get_fun_arg_adr _sci_pSelector SEL 1   
@@ -422,7 +422,81 @@ define mci
         # Refer to http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html
         # for type encodings
         set $_mci_arg_type = (char *)method_copyArgumentType($_mci_method, $_mci_arg_index)
-        printf "Type of arg %d is %s\n", $_mci_arg_index - 2, $_mci_arg_type
+        set $_mci_method_arg_index = $_mci_arg_index - 2
+        
+        # Object
+        if $_mci_arg_type[0] == '@'
+            printf "Arg %d is an object\n", $_mci_method_arg_index
+        # Decimal value
+        else
+        if (const char *)strchr("islqISLQ", $_mci_arg_type[0])
+            printf "Arg %d is a decimal value\n", $_mci_method_arg_index
+        # Character
+        else
+        if (const char *)strchr("cC", $_mci_arg_type[0])
+            printf "Arg %d is a character\n", $_mci_method_arg_index
+        # Floating point value
+        else
+        if (const char *)strchr("fd", $_mci_arg_type[0])
+            printf "Arg %d is an floating-point value\n", $_mci_method_arg_index
+        # Boolean value
+        else
+        if $_mci_arg_type[0] == 'B'
+            printf "Arg %d is a boolean\n", $_mci_method_arg_index
+        # Pointer
+        else
+        if $_mci_arg_type[0] == '^'
+            printf "Arg %d is a pointer\n", $_mci_method_arg_index
+        # C-string
+        else
+        if $_mci_arg_type[0] == '*'
+            printf "Arg %d is a C-string\n", $_mci_method_arg_index
+        # C-array
+        else
+        if $_mci_arg_type[0] == '['
+            printf "Arg %d is a C-array\n", $_mci_method_arg_index
+        # C-struct
+        else
+        if $_mci_arg_type[0] == '{'
+            printf "Arg %d is a C-struct\n", $_mci_method_arg_index
+        # Union
+        else
+        if $_mci_arg_type[0] == '('
+            printf "Arg %d is a union\n", $_mci_method_arg_index
+        # Class object
+        else
+        if $_mci_arg_type[0] == '#'
+            printf "Arg %d is a class\n", $_mci_method_arg_index
+        # Selector
+        else
+        if $_mci_arg_type[0] == ':'
+            printf "Arg %d is a selector\n", $_mci_method_arg_index
+        # Selector
+        else
+        if $_mci_arg_type[0] == 'b'
+            printf "Arg %d is a bit field\n", $_mci_method_arg_index
+        # Void
+        else
+        if $_mci_arg_type[0] == 'v'
+            printf "Arg %d is void\n", $_mci_method_arg_index  
+        # Unknown
+        else
+            printf "Arg %d has an unknown type\n", $_mci_method_arg_index
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        
         set $_mci_arg_index = $_mci_arg_index + 1
     end
 end
