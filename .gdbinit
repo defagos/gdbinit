@@ -338,22 +338,143 @@ set unwindonsignal on
 
 # TODO: Currently only i386 (& iOS simulator). Must deal with 64 bits & iOS device as well!
 
-define _get_fun_arg_adr
+define _getfunargadr
 if $argc == 2
-    set $$arg0 = (int *)($esp+4+4*$arg1)
-else 
-if $argc == 3
-    set $$arg0 = ($arg1 *)($esp+4+4*$arg2)
+    if $arg1 < 0
+        printf "Incorrect index (must be >= 0)"
+    # id parameter
+    else
+    if $arg1 == 0
+        set $$arg0 = (id *)($esp + sizeof(int *))
+    # SEL parameter
+    else
+    if $arg1 == 1
+        set $$arg0 = (SEL *)($esp + sizeof(int *) + sizeof(id))
+    # Other parameters
+    else
+        # Extract object and selector first
+        _getfunargadr _getfunargadr_pSelf 0
+        _getfunargadr _getfunargadr_pSelector 1
+        
+        # Retrieve the class and method information from the Objective-C runtime
+        set $_getfunargadr_class = (Class)object_getClass(*$_getfunargadr_pSelf)
+        
+        # Class or instance method?
+        if ((int)class_isMetaClass($_getfunargadr_class))
+            set $_getfunargadr_method = (Method)class_getClassMethod($_getfunargadr_class, *$_getfunargadr_pSelector)
+        else
+            set $_getfunargadr_method = (Method)class_getInstanceMethod($_getfunargadr_class, *$_getfunargadr_pSelector)
+        end
+        
+        # Sanity check
+        set $_getfunargadr_methodNbrArgs = (unsigned int)method_getNumberOfArguments($_getfunargadr_method) 
+        if $arg1 >= $_getfunargadr_methodNbrArgs
+            printf "Incorrect index (must be < %d)", $_getfunargadr_methodNbrArgs
+        else
+            # Calculate the address of the requested parameter
+            set $_getfunargadr_argAdr = $esp + sizeof(int *) + sizeof(id) + sizeof(SEL)
+            set $_getfunargadr_argIndex = 2
+            while ($arg1 - $_getfunargadr_argIndex)
+                # Refer to http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html
+                # for type encodings
+                set $_getfunargadr_argType = (char *)method_copyArgumentType($_getfunargadr_method, $_getfunargadr_argIndex)
+               
+                printf "Type of arg %d is %s\n", $_getfunargadr_argIndex, $_getfunargadr_argType
+                
+                # Types derived from pointer
+                if (const char *)strchr("@^*#:", $_getfunargadr_argType[0])
+                    set $_getfunargadr_argSize = sizeof(int *)
+                # Int
+                else
+                if (const char *)strchr("iI", $_getfunargadr_argType[0])
+                    set $_getfunargadr_argSize = sizeof(int)
+                # Short
+                else
+                if (const char *)strchr("sS", $_getfunargadr_argType[0])
+                    # Warning: Min size is always natural type (pointer) size?
+                    # TODO: Create _minsizeof command
+                    set $_getfunargadr_argSize = sizeof(int *)
+                # Long
+                else
+                if (const char *)strchr("lL", $_getfunargadr_argType[0])
+                    set $_getfunargadr_argSize = sizeof(long)
+                # Long long
+                else
+                if (const char *)strchr("qQ", $_getfunargadr_argType[0])
+                    set $_getfunargadr_argSize = sizeof(long long)
+                # Character
+                else
+                if (const char *)strchr("cC", $_getfunargadr_argType[0])
+                    # Warning: Min size is always natural type (pointer) size?
+                    # TODO: Create _minsizeof command
+                    set $_getfunargadr_argSize = sizeof(int *)
+                # Float
+                else
+                if $_getfunargadr_argType[0] == 'f'
+                    set $_getfunargadr_argSize = sizeof(float)
+                # Double
+                else
+                if $_getfunargadr_argType[0] == 'd'
+                    set $_getfunargadr_argSize = sizeof(double)
+                # C-array
+                else
+                if $_getfunargadr_argType[0] == '['
+                    # TODO: Must read from the type string!
+                    set $_getfunargadr_argSize = 17
+                # C-struct
+                else
+                if $_getfunargadr_argType[0] == '{'
+                    # TODO: Must read from the type string! (need to factor out this "switch" first!). Loop and add
+                    set $_getfunargadr_argSize = 17
+                # Union
+                else
+                if $_getfunargadr_argType[0] == '('
+                    # TODO: Must read from the type string! (need to factor out this "switch" first!). Loop and find max
+                    set $_getfunargadr_argSize = 17
+                # Bit field
+                else
+                if $_getfunargadr_argType[0] == 'b'
+                    # TODO: Must read from the type string! (need to factor out this "switch" first!). Probably
+                    #       some padding is made to align data
+                    set $_getfunargadr_argSize = 17
+                # Unknown, boolean (?), void (?)
+                # TODO: Check those types with a ?
+                else
+                    # Use "natural" size
+                    set $_getfunargadr_argSize = sizeof(int)
+                end
+                end
+                end
+                end
+                end
+                end
+                end
+                end
+                end
+                end
+                end
+                end
+                set $_getfunargadr_argAdr = $_getfunargadr_argAdr + $_getfunargadr_argSize
+                set $_getfunargadr_argIndex = $_getfunargadr_argIndex + 1
+            end
+        end
+        
+        printf "Offset: %d\n", $_getfunargadr_argAdr - $esp
+        
+        # Can now return the calculated parameter address
+        set $$arg0 = (int *)$_getfunargadr_argAdr
+    end
+    end
+    end
 else
-    help _get_fun_arg_adr
-end
+    help _getfunargadr
 end
 end
 
-document _get_fun_arg_adr
+document _getfunargadr
 (For internal use) Fetch function arguments addresses (this command must called before a function 
-prologue)
-Usage: _get_fun_arg_adr OUTPUT_VAR_NAME [TYPE] INDEX
+prologue) of a function having and id and a SEL as first two parameters
+Usage: _getfunargadr OUTPUT_VAR_NAME INDEX
 Sets the variable $OUTPUT_VAR_NAME to the address of the INDEX-th argument of the function
 Uses type TYPE if present, otherwise 'int'
 INDEX is 0-based
@@ -373,8 +494,8 @@ if $argc == 0
     # Using the sci command, we can therefore get information about the selector which is called
     # when we stop on on objc_msgSend, but  also when we stop on any Objective-C method call. Nice,
     # isn't it?
-    _get_fun_arg_adr _sci_pSelf id 0
-    _get_fun_arg_adr _sci_pSelector SEL 1   
+    _getfunargadr _sci_pSelf 0
+    _getfunargadr _sci_pSelector 1   
     
     # Must be careful enough here NOT to use message sending (would be recursive!)
     printf "Message %s sent to <%s: %p>\n", *$_sci_pSelector, (const char *)object_getClassName(*$_sci_pSelf), *$_sci_pSelf
@@ -398,8 +519,8 @@ define mci
     # Whe setting breakpoints on Objective-C methods, we in fact break on the C-function implementing
     # them. Those all have a prototype given by
     #     typedef id (*IMP)(id, SEL, ...)
-    _get_fun_arg_adr _mci_pSelf id 0
-    _get_fun_arg_adr _mci_pSelector SEL 1
+    _getfunargadr _mci_pSelf 0
+    _getfunargadr _mci_pSelector 1
     
     # Retrieve the class and method information from the Objective-C runtime
     set $_mci_class = (Class)object_getClass(*$_mci_pSelf)
@@ -412,147 +533,147 @@ define mci
         set $_mci_method = (Method)class_getInstanceMethod($_mci_class, *$_mci_pSelector)
         printf "Calling method -[%s %s]\n", (const char *)object_getClassName(*$_mci_pSelf), (SEL)method_getName($_mci_method)
     end
-        
+    
     # Display the arguments (remark: an ellipsis in an argument list is not included in
     # the return value of method_getNumberOfArguments)
-    set $_mci_method_nbr_args = (unsigned int)method_getNumberOfArguments($_mci_method) 
+    set $_mci_methodNbrArgs = (unsigned int)method_getNumberOfArguments($_mci_method) 
     # Begin with the third argument (the first are id and SEL)
-    set $_mci_arg_index = 2
-    while ($_mci_method_nbr_args - $_mci_arg_index)
+    set $_mci_argIndex = 2
+    while ($_mci_methodNbrArgs - $_mci_argIndex)
         # Refer to http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html
         # for type encodings
-        set $_mci_arg_type = (char *)method_copyArgumentType($_mci_method, $_mci_arg_index)
-        set $_mci_method_arg_index = $_mci_arg_index - 1
+        set $_mci_argType = (char *)method_copyArgumentType($_mci_method, $_mci_argIndex)
+        set $_mci_methodArgIndex = $_mci_argIndex - 1
         
         # Object information
-        if $_mci_arg_type[0] == '@'
-            _get_fun_arg_adr _mci_pArg id $_mci_arg_index
+        if $_mci_argType[0] == '@'
+            _getfunargadr _mci_pArg id $_mci_argIndex
             
             # Show a preview of the object description method. We can call Objective-C methods here, but only
             # if they have no object as parameter (otherwise we might create a recursion if mci is applied on
             # for inspecting a method we use here!). Otherwise, we must rely on C-functions
-            set $_mci_arg_description_preview = (const char *)[(NSString *)[*$_mci_pArg description] UTF8String]
+            set $_mci_argDescription = (const char *)[(NSString *)[*$_mci_pArg description] UTF8String]
             
             # Truncate the description if too long; we must work with a separate buffer
-            set $_mci_cstr_buffer_truncated = 0
-            set $_mci_cstr_buffer_length = (size_t)strlen($_mci_arg_description_preview)
-            if $_mci_cstr_buffer_length > 200
-                set $_mci_cstr_buffer_truncated = 1
-                set $_mci_cstr_buffer_length = 200
+            set $_mci_cstrBufferTruncated = 0
+            set $_mci_cstrBufferLength = (size_t)strlen($_mci_argDescription)
+            if $_mci_cstrBufferLength > 200
+                set $_mci_cstrBufferTruncated = 1
+                set $_mci_cstrBufferLength = 200
             end
             
             # Allocate and fill the buffer
-            set $_mci_cstr_buffer = (char *)calloc(sizeof(char) * ($_mci_cstr_buffer_length + 1))
+            set $_mci_cstrBuffer = (char *)calloc(sizeof(char) * ($_mci_cstrBufferLength + 1))
             # Trick: We do not use call here since it would print the result to the console!
-            set $_mci_cstr_buffer = (char *)strncpy($_mci_cstr_buffer, $_mci_arg_description_preview, 200)
+            set $_mci_cstrBuffer = (char *)strncpy($_mci_cstrBuffer, $_mci_argDescription, 200)
             
             # Truncate all lines except the first one
-            set $_mci_buffer_cr_pos = (char *)strchr($_mci_cstr_buffer, '\n')
-            if $_mci_buffer_cr_pos
-                set $_mci_cstr_buffer_truncated = 1
-                set *$_mci_buffer_cr_pos = '\0'
+            set $_mci_bufferCrPos = (char *)strchr($_mci_cstrBuffer, '\n')
+            if $_mci_bufferCrPos
+                set $_mci_cstrBufferTruncated = 1
+                set *$_mci_bufferCrPos = '\0'
             end
             
             # Display the (maybe truncated) description
-            if $_mci_cstr_buffer_truncated
-                printf "\tArg %2d: <%s: %p>: Description: %s (truncated: call 'po [%p description]' to get the full version)\n", $_mci_method_arg_index, (const char *)object_getClassName(*$_mci_pArg), *$_mci_pArg, $_mci_cstr_buffer, *$_mci_pArg
+            if $_mci_cstrBufferTruncated
+                printf "\tArg %2d: <%s: %p>: Description: %s (truncated: call 'po [%p description]' to get the full version)\n", $_mci_methodArgIndex, (const char *)object_getClassName(*$_mci_pArg), *$_mci_pArg, $_mci_cstrBuffer, *$_mci_pArg
             else
-                printf "\tArg %2d: <%s: %p>: Description: %s\n", $_mci_method_arg_index, (const char *)object_getClassName(*$_mci_pArg), *$_mci_pArg, $_mci_arg_description_preview
+                printf "\tArg %2d: <%s: %p>: Description: %s\n", $_mci_methodArgIndex, (const char *)object_getClassName(*$_mci_pArg), *$_mci_pArg, $_mci_argDescription
             end
             
             # Done with the buffer
-            call (void)free($_mci_cstr_buffer)
+            call (void)free($_mci_cstrBuffer)
         # Int
         else
-        if $_mci_arg_type[0] == 'i'
-            _get_fun_arg_adr _mci_pArg int $_mci_arg_index
-            printf "\tArg %2d: int: (d)%d (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
+        if $_mci_argType[0] == 'i'
+            _getfunargadr _mci_pArg $_mci_argIndex
+            printf "\tArg %2d: int: (d)%d (h)%X (o)%o\n", $_mci_methodArgIndex, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
         # Short
         else
-        if $_mci_arg_type[0] == 's'
-            _get_fun_arg_adr _mci_pArg short $_mci_arg_index
-            printf "\tArg %2d: short: (d)%d (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg            
+        if $_mci_argType[0] == 's'
+            _getfunargadr _mci_pArg $_mci_argIndex
+            printf "\tArg %2d: short: (d)%d (h)%X (o)%o\n", $_mci_methodArgIndex, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg            
         # Long
         else
-        if $_mci_arg_type[0] == 'l'
-            _get_fun_arg_adr _mci_pArg long $_mci_arg_index
-            printf "\tArg %2d: long: (d)%d (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
+        if $_mci_argType[0] == 'l'
+            _getfunargadr _mci_pArg $_mci_argIndex
+            printf "\tArg %2d: long: (d)%d (h)%X (o)%o\n", $_mci_methodArgIndex, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
         # Long long
         else
-        if $_mci_arg_type[0] == 'q'
-            _get_fun_arg_adr _mci_pArg 'long long' $_mci_arg_index
-            printf "\tArg %2d: long long: (d)%d (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
+        if $_mci_argType[0] == 'q'
+            _getfunargadr _mci_pArg $_mci_argIndex
+            printf "\tArg %2d: long long: (d)%d (h)%X (o)%o\n", $_mci_methodArgIndex, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
         # Unsigned int
         else
-        if $_mci_arg_type[0] == 'I'
-            _get_fun_arg_adr _mci_pArg 'unsigned int' $_mci_arg_index
-            printf "\tArg %2d: unsigned int: (d)%u (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
+        if $_mci_argType[0] == 'I'
+            _getfunargadr _mci_pArg $_mci_argIndex
+            printf "\tArg %2d: unsigned int: (d)%u (h)%X (o)%o\n", $_mci_methodArgIndex, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
         # Unsigned short
         else
-        if $_mci_arg_type[0] == 'S'
-            _get_fun_arg_adr _mci_pArg 'unsigned short' $_mci_arg_index
-            printf "\tArg %2d: unsigned short: (d)%u (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
+        if $_mci_argType[0] == 'S'
+            _getfunargadr _mci_pArg $_mci_argIndex
+            printf "\tArg %2d: unsigned short: (d)%u (h)%X (o)%o\n", $_mci_methodArgIndex, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
         # Unsigned long
         else
-        if $_mci_arg_type[0] == 'L'
-            _get_fun_arg_adr _mci_pArg 'unsigned long' $_mci_arg_index
-            printf "\tArg %2d: unsigned long: (d)%u (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
+        if $_mci_argType[0] == 'L'
+            _getfunargadr _mci_pArg $_mci_argIndex
+            printf "\tArg %2d: unsigned long: (d)%u (h)%X (o)%o\n", $_mci_methodArgIndex, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg
         # Unsigned long long
         else
-        if $_mci_arg_type[0] == 'Q'
-            _get_fun_arg_adr _mci_pArg 'unsigned long long' $_mci_arg_index
-            printf "\tArg %2d: unsigned long long: (d)%u (h)%X (o)%o\n", $_mci_method_arg_index, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg            
+        if $_mci_argType[0] == 'Q'
+            _getfunargadr _mci_pArg $_mci_argIndex
+            printf "\tArg %2d: unsigned long long: (d)%u (h)%X (o)%o\n", $_mci_methodArgIndex, *$_mci_pArg, *$_mci_pArg, *$_mci_pArg            
         # Character
         else
-        if (const char *)strchr("cC", $_mci_arg_type[0])
-            printf "\tArg %2d is a character\n", $_mci_method_arg_index
+        if (const char *)strchr("cC", $_mci_argType[0])
+            printf "\tArg %2d is a character\n", $_mci_methodArgIndex
         # Floating point value
         else
-        if (const char *)strchr("fd", $_mci_arg_type[0])
-            printf "\tArg %2d is an floating-point value\n", $_mci_method_arg_index
+        if (const char *)strchr("fd", $_mci_argType[0])
+            printf "\tArg %2d is an floating-point value\n", $_mci_methodArgIndex
         # Boolean value
         else
-        if $_mci_arg_type[0] == 'B'
-            printf "\tArg %2d is a boolean\n", $_mci_method_arg_index
+        if $_mci_argType[0] == 'B'
+            printf "\tArg %2d is a boolean\n", $_mci_methodArgIndex
         # Pointer
         else
-        if $_mci_arg_type[0] == '^'
-            printf "\tArg %2d is a pointer\n", $_mci_method_arg_index
+        if $_mci_argType[0] == '^'
+            printf "\tArg %2d is a pointer\n", $_mci_methodArgIndex
         # C-string
         else
-        if $_mci_arg_type[0] == '*'
-            printf "\tArg %2d is a C-string\n", $_mci_method_arg_index
+        if $_mci_argType[0] == '*'
+            printf "\tArg %2d is a C-string\n", $_mci_methodArgIndex
         # C-array
         else
-        if $_mci_arg_type[0] == '['
-            printf "\tArg %2d is a C-array\n", $_mci_method_arg_index
+        if $_mci_argType[0] == '['
+            printf "\tArg %2d is a C-array\n", $_mci_methodArgIndex
         # C-struct
         else
-        if $_mci_arg_type[0] == '{'
-            printf "\tArg %2d is a C-struct\n", $_mci_method_arg_index
+        if $_mci_argType[0] == '{'
+            printf "\tArg %2d is a C-struct\n", $_mci_methodArgIndex
         # Union
         else
-        if $_mci_arg_type[0] == '('
-            printf "\tArg %2d is a union\n", $_mci_method_arg_index
+        if $_mci_argType[0] == '('
+            printf "\tArg %2d is a union\n", $_mci_methodArgIndex
         # Class object
         else
-        if $_mci_arg_type[0] == '#'
-            printf "\tArg %2d is a class\n", $_mci_method_arg_index
+        if $_mci_argType[0] == '#'
+            printf "\tArg %2d is a class\n", $_mci_methodArgIndex
         # Selector
         else
-        if $_mci_arg_type[0] == ':'
-            printf "\tArg %2d is a selector\n", $_mci_method_arg_index
-        # Selector
+        if $_mci_argType[0] == ':'
+            printf "\tArg %2d is a selector\n", $_mci_methodArgIndex
+        # Bit field
         else
-        if $_mci_arg_type[0] == 'b'
-            printf "\tArg %2d is a bit field\n", $_mci_method_arg_index
+        if $_mci_argType[0] == 'b'
+            printf "\tArg %2d is a bit field\n", $_mci_methodArgIndex
         # Void
         else
-        if $_mci_arg_type[0] == 'v'
-            printf "\tArg %2d is void\n", $_mci_method_arg_index  
+        if $_mci_argType[0] == 'v'
+            printf "\tArg %2d is void\n", $_mci_methodArgIndex  
         # Unknown
         else
-            printf "\tArg %2d has an unknown type\n", $_mci_method_arg_index
+            printf "\tArg %2d has an unknown type\n", $_mci_methodArgIndex
         end
         end
         end
@@ -575,7 +696,7 @@ define mci
         end
         end
         
-        set $_mci_arg_index = $_mci_arg_index + 1
+        set $_mci_argIndex = $_mci_argIndex + 1
     end
 end
 document mci
@@ -588,9 +709,9 @@ end
 define xa
 # Check the first argument
 if ($argc == 2 && "$arg0"[0] == '/')
-    # No type argument to _get_fun_arg_adr. Only interested in the address, cast will be made
+    # No type argument to _getfunargadr. Only interested in the address, cast will be made
     # by x/<type> below
-    _get_fun_arg_adr _xa_pArg $arg1
+    _getfunargadr _xa_pArg $arg1
     x $arg0 $_xa_pArg
 else
     help xa
