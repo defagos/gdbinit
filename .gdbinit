@@ -539,7 +539,7 @@ define mci
             end
             
             # Allocate and fill the buffer
-            set $_mci_cstrBuffer = (char *)calloc(sizeof(char) * ($_mci_cstrBufferLength + 1))
+            set $_mci_cstrBuffer = (char *)calloc($_mci_cstrBufferLength + 1, sizeof(char))
             # Trick: We do not use call here since it would print the result to the console!
             set $_mci_cstrBuffer = (char *)strncpy($_mci_cstrBuffer, $_mci_argDescription, 200)
             
