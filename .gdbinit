@@ -333,78 +333,39 @@ end
 set unwindonsignal on
 
 # ----------------------------------------------------------------------------------------------
+# Getting the gdb utils dynamic library
+# ----------------------------------------------------------------------------------------------
+
+define _get_gdbinit_utils_dylib
+    if $argc == 1
+        if ! $_get_gdbinit_utils_dylibHandle
+            # 2 = RTLD_NOW
+            set $_get_gdbinit_utils_dylibHandle = (void *)dlopen("/Users/defagos/Development/gitrepo/gdbinit/build/gdbinit_utils.dylib", 2)
+        end
+        set $$arg0 = $_get_gdbinit_utils_dylibHandle
+    else
+        help _get_gdbinit_utils_dylib
+    end
+end
+
+document _get_gdbinit_utils_dylib
+(For internal use) Return the utils dynamic library used for implementation purposes
+Usage: _get_gdbinit_utils_dylib OUTPUT_VAR_NAME
+Sets the variable $OUTPUT_VAR_NAME to this size. If the type is unknown, the pointer size
+is returned
+end
+
+# ----------------------------------------------------------------------------------------------
 # Getting the (aligned) sizeof for a type given its encoding
 # ----------------------------------------------------------------------------------------------
 
 define _aligned_sizeof_for_encoding
     if $argc == 2
-        # Types derived from pointer
-        if (const char *)strchr("@^*#:[", $arg1[0])
-            set $$arg0 = sizeof(int *)
-        # Int
-        else
-        if (const char *)strchr("iI", $arg1[0])
-            set $$arg0 = sizeof(int)
-        # Short
-        else
-        if (const char *)strchr("sS", $arg1[0])
-            # Warning: Min size is always natural type (pointer) size?
-            # TODO: Create _minsizeof command
-            set $$arg0 = sizeof(int *)
-        # Long
-        else
-        if (const char *)strchr("lL", $arg1[0])
-            set $$arg0 = sizeof(long)
-        # Long long
-        else
-        if (const char *)strchr("qQ", $arg1[0])
-            set $$arg0 = sizeof(long long)
-        # Character
-        else
-        if (const char *)strchr("cC", $arg1[0])
-            # Warning: Min size is always natural type (pointer) size?
-            # TODO: Create _minsizeof command
-            set $$arg0 = sizeof(int *)
-        # Float
-        else
-        if $arg1[0] == 'f'
-            set $$arg0 = sizeof(float)
-        # Double
-        else
-        if $arg1[0] == 'd'
-            set $$arg0 = sizeof(double)
-        # C-struct
-        else
-        if $arg1[0] == '{'
-            # TODO: Must read from the type string! (need to factor out this "switch" first!). Loop and add
-            set $$arg0 = 17
-        # Union
-        else
-        if $arg1[0] == '('
-            # TODO: Must read from the type string! (need to factor out this "switch" first!). Loop and find max
-            set $$arg0 = 17
-        # Bit field
-        else
-        if $arg1[0] == 'b'
-            # TODO: Must read from the type string! (need to factor out this "switch" first!). Probably
-            #       some padding is made to align data
-            set $$arg0 = 17
-        # Unknown, boolean (?), void (?)
-        # TODO: Check those types with a ?
-        else
-            # Use "natural" size
-            set $$arg0 = sizeof(int)
+        if ! $_aligned_sizeof_for_encoding_functionHandle
+            _get_gdbinit_utils_dylib _aligned_sizeof_for_encoding_dylib
+            set $_aligned_sizeof_for_encoding_functionHandle = (void *)dlsym($_aligned_sizeof_for_encoding_dylib, "gdbinit_utils_sizeof")
         end
-        end
-        end
-        end
-        end
-        end
-        end
-        end
-        end
-        end
-        end
+        set $$arg0 = $_aligned_sizeof_for_encoding_functionHandle($arg1)
     else
         help _aligned_sizeof_for_encoding
     end
@@ -415,7 +376,7 @@ document _aligned_sizeof_for_encoding
 alignment issues.
 Usage: _aligned_sizeof_for_encoding OUTPUT_VAR_NAME ENCODING
 Sets the variable $OUTPUT_VAR_NAME to this size. If the type is unknown, the pointer size
-is returned
+is returned. ENCODING must be a C-string
 end
 
 # ----------------------------------------------------------------------------------------------
