@@ -339,7 +339,7 @@ set unwindonsignal on
 define _aligned_sizeof_for_encoding
     if $argc == 2
         # Types derived from pointer
-        if (const char *)strchr("@^*#:", $arg1[0])
+        if (const char *)strchr("@^*#:[", $arg1[0])
             set $$arg0 = sizeof(int *)
         # Int
         else
@@ -373,11 +373,6 @@ define _aligned_sizeof_for_encoding
         else
         if $arg1[0] == 'd'
             set $$arg0 = sizeof(double)
-        # C-array
-        else
-        if $arg1[0] == '['
-            # TODO: Must read from the type string!
-            set $$arg0 = 17
         # C-struct
         else
         if $arg1[0] == '{'
@@ -399,7 +394,6 @@ define _aligned_sizeof_for_encoding
         else
             # Use "natural" size
             set $$arg0 = sizeof(int)
-        end
         end
         end
         end
@@ -659,6 +653,12 @@ define mci
         # Pointer
         else
         if $_mci_argType[0] == '^'
+            # TODO: We arrive here for pointers (e.g. long *a), but also for arrays with unspecified
+            #       length (e.g. long a[ ]). We can display the pointed value by reading what's next
+            #       to ^ in the type string, but only the first pointed element (if many) can be displayed.
+            #       In all cases, it is impossible to know if we got a pointer to one or contiguous elements,
+            #       the value preview should therefore always display this warning: "(only the first value
+            #       at this location is displayed)"
             printf "\tArg %2d is a pointer\n", $_mci_methodArgIndex
         # C-string
         else
@@ -667,6 +667,9 @@ define mci
         # C-array
         else
         if $_mci_argType[0] == '['
+            # TODO: We arrive here in the case of arrays with specified length (e.g. long a[6]). In
+            #       such cases, we can display the complete element list (maybe truncated down to
+            #       some number of lines if too many)
             printf "\tArg %2d is a C-array\n", $_mci_methodArgIndex
         # C-struct
         else
