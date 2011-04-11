@@ -7,11 +7,11 @@
 # ----------------------------------------------------------------------------------------------
 
 define bpl
-if $argc == 0
-    info breakpoints
-else
-    help bpl
-end
+    if $argc == 0
+        info breakpoints
+    else
+        help bpl
+    end
 end
 
 document bpl
@@ -23,15 +23,15 @@ end
 # ----------------------------------------------------------------------------------------------
 
 define bp
-if $argc == 0
-    break
-else 
-if $argc == 1
-    break $arg0
-else
-    help bp
-end
-end
+    if $argc == 0
+        break
+    else 
+    if $argc == 1
+        break $arg0
+    else
+        help bp
+    end
+    end
 end
 
 document bp
@@ -62,15 +62,15 @@ end
 # ----------------------------------------------------------------------------------------------
 
 define bpt
-if $argc == 0
-    tbreak
-else 
-if $argc == 1
-    tbreak $arg0
-else
-    help bpt
-end
-end
+    if $argc == 0
+        tbreak
+    else 
+    if $argc == 1
+        tbreak $arg0
+    else
+        help bpt
+    end
+    end
 end
 
 document bpt
@@ -100,11 +100,11 @@ end
 # Memory breakpoints
 # ----------------------------------------------------------------------------------------------
 define bpm
-if $argc == 1
-    awatch $arg0
-else 
-    help bpm
-end
+    if $argc == 1
+        awatch $arg0
+    else 
+        help bpm
+    end
 end
 
 document bpm
@@ -126,15 +126,15 @@ end
 # Hardware assisted breakpoints
 # ----------------------------------------------------------------------------------------------
 define bph
-if $argc == 0
-    hb
-else 
-if $argc == 1
-    hb $arg0
-else
-    help bph
-end
-end
+    if $argc == 0
+        hb
+    else 
+    if $argc == 1
+        hb $arg0
+    else
+        help bph
+    end
+    end
 end
 
 document bph
@@ -165,15 +165,15 @@ end
 # ----------------------------------------------------------------------------------------------
 
 define bpc
-if $argc == 0
-    clear
-else 
-if $argc == 1
-    clear $arg0
-else
-    help bpc
-end
-end
+    if $argc == 0
+        clear
+    else 
+    if $argc == 1
+        clear $arg0
+    else
+        help bpc
+    end
+    end
 end
 
 document bpc
@@ -204,51 +204,51 @@ end
 # ----------------------------------------------------------------------------------------------
 
 define bpe
-if $argc == 0
-    enable
-else 
-if $argc == 1
-    enable $arg0
-else 
-if $argc == 2
-    enable $arg0 $arg1
-else 
-if $argc == 3
-    enable $arg0 $arg1 $arg2
-else 
-if $argc == 4
-    enable $arg0 $arg1 $arg2 $arg3
-else 
-if $argc == 5
-    enable $arg0 $arg1 $arg2 $arg3 $arg4
-else 
-if $argc == 6
-    enable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5
-else
-if $argc == 7
-    enable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6
-else 
-if $argc == 8
-    enable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7
-else 
-if $argc == 9
-    enable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8
-else 
-if $ argc == 10
-    enable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8 $arg9
-else
-    help bpe
-end
-end
-end
-end
-end
-end
-end
-end
-end
-end
-end
+    if $argc == 0
+        enable
+    else 
+    if $argc == 1
+        enable $arg0
+    else 
+    if $argc == 2
+        enable $arg0 $arg1
+    else 
+    if $argc == 3
+        enable $arg0 $arg1 $arg2
+    else 
+    if $argc == 4
+        enable $arg0 $arg1 $arg2 $arg3
+    else 
+    if $argc == 5
+        enable $arg0 $arg1 $arg2 $arg3 $arg4
+    else 
+    if $argc == 6
+        enable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5
+    else
+    if $argc == 7
+        enable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6
+    else 
+    if $argc == 8
+        enable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7
+    else 
+    if $argc == 9
+        enable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8
+    else 
+    if $ argc == 10
+        enable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8 $arg9
+    else
+        help bpe
+    end
+    end
+    end
+    end
+    end
+    end
+    end
+    end
+    end
+    end
+    end
 end
 
 document bpe
@@ -263,51 +263,51 @@ end
 # ----------------------------------------------------------------------------------------------
 
 define bpd
-if $argc == 0
-    disable
-else 
-if $argc == 1
-    disable $arg0
-else 
-if $argc == 2
-    disable $arg0 $arg1
-else 
-if $argc == 3
-    disable $arg0 $arg1 $arg2
-else
-if $argc == 4
-    disable $arg0 $arg1 $arg2 $arg3
-else 
-if $argc == 5
-    disable $arg0 $arg1 $arg2 $arg3 $arg4
-else 
-if $argc == 6
-    disable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5
-else 
-if $argc == 7
-    disable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6
-else 
-if $argc == 8
-    disable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7
-else 
-if $argc == 9
-    disable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8
-else 
-if $ argc == 10
-    disable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8 $arg9
-else
-    help bpd
-end
-end
-end
-end
-end
-end
-end
-end
-end
-end
-end
+    if $argc == 0
+        disable
+    else 
+    if $argc == 1
+        disable $arg0
+    else 
+    if $argc == 2
+        disable $arg0 $arg1
+    else 
+    if $argc == 3
+        disable $arg0 $arg1 $arg2
+    else
+    if $argc == 4
+        disable $arg0 $arg1 $arg2 $arg3
+    else 
+    if $argc == 5
+        disable $arg0 $arg1 $arg2 $arg3 $arg4
+    else 
+    if $argc == 6
+        disable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5
+    else 
+    if $argc == 7
+        disable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6
+    else 
+    if $argc == 8
+        disable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7
+    else 
+    if $argc == 9
+        disable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8
+    else 
+    if $ argc == 10
+        disable $arg0 $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 $arg8 $arg9
+    else
+        help bpd
+    end
+    end
+    end
+    end
+    end
+    end
+    end
+    end
+    end
+    end
+    end
 end
 
 document bpd
@@ -333,142 +333,163 @@ end
 set unwindonsignal on
 
 # ----------------------------------------------------------------------------------------------
+# Getting the (aligned) sizeof for a type given its encoding
+# ----------------------------------------------------------------------------------------------
+
+define _aligned_sizeof_for_encoding
+    if $argc == 2
+        # Types derived from pointer
+        if (const char *)strchr("@^*#:", $arg1[0])
+            set $$arg0 = sizeof(int *)
+        # Int
+        else
+        if (const char *)strchr("iI", $arg1[0])
+            set $$arg0 = sizeof(int)
+        # Short
+        else
+        if (const char *)strchr("sS", $arg1[0])
+            # Warning: Min size is always natural type (pointer) size?
+            # TODO: Create _minsizeof command
+            set $$arg0 = sizeof(int *)
+        # Long
+        else
+        if (const char *)strchr("lL", $arg1[0])
+            set $$arg0 = sizeof(long)
+        # Long long
+        else
+        if (const char *)strchr("qQ", $arg1[0])
+            set $$arg0 = sizeof(long long)
+        # Character
+        else
+        if (const char *)strchr("cC", $arg1[0])
+            # Warning: Min size is always natural type (pointer) size?
+            # TODO: Create _minsizeof command
+            set $$arg0 = sizeof(int *)
+        # Float
+        else
+        if $arg1[0] == 'f'
+            set $$arg0 = sizeof(float)
+        # Double
+        else
+        if $arg1[0] == 'd'
+            set $$arg0 = sizeof(double)
+        # C-array
+        else
+        if $arg1[0] == '['
+            # TODO: Must read from the type string!
+            set $$arg0 = 17
+        # C-struct
+        else
+        if $arg1[0] == '{'
+            # TODO: Must read from the type string! (need to factor out this "switch" first!). Loop and add
+            set $$arg0 = 17
+        # Union
+        else
+        if $arg1[0] == '('
+            # TODO: Must read from the type string! (need to factor out this "switch" first!). Loop and find max
+            set $$arg0 = 17
+        # Bit field
+        else
+        if $arg1[0] == 'b'
+            # TODO: Must read from the type string! (need to factor out this "switch" first!). Probably
+            #       some padding is made to align data
+            set $$arg0 = 17
+        # Unknown, boolean (?), void (?)
+        # TODO: Check those types with a ?
+        else
+            # Use "natural" size
+            set $$arg0 = sizeof(int)
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+        end
+    else
+        help _aligned_sizeof_for_encoding
+    end
+end
+
+document _aligned_sizeof_for_encoding
+(For internal use) Return the sizeof of a type given its encoding, taking into account
+alignment issues.
+Usage: _aligned_sizeof_for_encoding OUTPUT_VAR_NAME ENCODING
+Sets the variable $OUTPUT_VAR_NAME to this size. If the type is unknown, the pointer size
+is returned
+end
+
+# ----------------------------------------------------------------------------------------------
 # Retrieving arguments (only meant to be used before a function prologue)
 # ----------------------------------------------------------------------------------------------
 
 # TODO: Currently only i386 (& iOS simulator). Must deal with 64 bits & iOS device as well!
 
 define _getfunargadr
-if $argc == 2
-    if $arg1 < 0
-        printf "Incorrect index (must be >= 0)"
-    # id parameter
-    else
-    if $arg1 == 0
-        set $$arg0 = (id *)($esp + sizeof(int *))
-    # SEL parameter
-    else
-    if $arg1 == 1
-        set $$arg0 = (SEL *)($esp + sizeof(int *) + sizeof(id))
-    # Other parameters
-    else
-        # Extract object and selector first
-        _getfunargadr _getfunargadr_pSelf 0
-        _getfunargadr _getfunargadr_pSelector 1
-        
-        # Retrieve the class and method information from the Objective-C runtime
-        set $_getfunargadr_class = (Class)object_getClass(*$_getfunargadr_pSelf)
-        
-        # Class or instance method?
-        if ((int)class_isMetaClass($_getfunargadr_class))
-            set $_getfunargadr_method = (Method)class_getClassMethod($_getfunargadr_class, *$_getfunargadr_pSelector)
+    if $argc == 2
+        if $arg1 < 0
+            printf "Incorrect index (must be >= 0)"
+        # id parameter
         else
-            set $_getfunargadr_method = (Method)class_getInstanceMethod($_getfunargadr_class, *$_getfunargadr_pSelector)
-        end
-        
-        # Sanity check
-        set $_getfunargadr_methodNbrArgs = (unsigned int)method_getNumberOfArguments($_getfunargadr_method) 
-        if $arg1 >= $_getfunargadr_methodNbrArgs
-            printf "Incorrect index (must be < %d)", $_getfunargadr_methodNbrArgs
+        if $arg1 == 0
+            set $$arg0 = (id *)($esp + sizeof(int *))
+        # SEL parameter
         else
-            # Calculate the address of the requested parameter
-            set $_getfunargadr_argAdr = $esp + sizeof(int *) + sizeof(id) + sizeof(SEL)
-            set $_getfunargadr_argIndex = 2
-            while ($arg1 - $_getfunargadr_argIndex)
-                # Refer to http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html
-                # for type encodings
-                set $_getfunargadr_argType = (char *)method_copyArgumentType($_getfunargadr_method, $_getfunargadr_argIndex)
-               
-                printf "Type of arg %d is %s\n", $_getfunargadr_argIndex, $_getfunargadr_argType
-                
-                # Types derived from pointer
-                if (const char *)strchr("@^*#:", $_getfunargadr_argType[0])
-                    set $_getfunargadr_argSize = sizeof(int *)
-                # Int
-                else
-                if (const char *)strchr("iI", $_getfunargadr_argType[0])
-                    set $_getfunargadr_argSize = sizeof(int)
-                # Short
-                else
-                if (const char *)strchr("sS", $_getfunargadr_argType[0])
-                    # Warning: Min size is always natural type (pointer) size?
-                    # TODO: Create _minsizeof command
-                    set $_getfunargadr_argSize = sizeof(int *)
-                # Long
-                else
-                if (const char *)strchr("lL", $_getfunargadr_argType[0])
-                    set $_getfunargadr_argSize = sizeof(long)
-                # Long long
-                else
-                if (const char *)strchr("qQ", $_getfunargadr_argType[0])
-                    set $_getfunargadr_argSize = sizeof(long long)
-                # Character
-                else
-                if (const char *)strchr("cC", $_getfunargadr_argType[0])
-                    # Warning: Min size is always natural type (pointer) size?
-                    # TODO: Create _minsizeof command
-                    set $_getfunargadr_argSize = sizeof(int *)
-                # Float
-                else
-                if $_getfunargadr_argType[0] == 'f'
-                    set $_getfunargadr_argSize = sizeof(float)
-                # Double
-                else
-                if $_getfunargadr_argType[0] == 'd'
-                    set $_getfunargadr_argSize = sizeof(double)
-                # C-array
-                else
-                if $_getfunargadr_argType[0] == '['
-                    # TODO: Must read from the type string!
-                    set $_getfunargadr_argSize = 17
-                # C-struct
-                else
-                if $_getfunargadr_argType[0] == '{'
-                    # TODO: Must read from the type string! (need to factor out this "switch" first!). Loop and add
-                    set $_getfunargadr_argSize = 17
-                # Union
-                else
-                if $_getfunargadr_argType[0] == '('
-                    # TODO: Must read from the type string! (need to factor out this "switch" first!). Loop and find max
-                    set $_getfunargadr_argSize = 17
-                # Bit field
-                else
-                if $_getfunargadr_argType[0] == 'b'
-                    # TODO: Must read from the type string! (need to factor out this "switch" first!). Probably
-                    #       some padding is made to align data
-                    set $_getfunargadr_argSize = 17
-                # Unknown, boolean (?), void (?)
-                # TODO: Check those types with a ?
-                else
-                    # Use "natural" size
-                    set $_getfunargadr_argSize = sizeof(int)
-                end
-                end
-                end
-                end
-                end
-                end
-                end
-                end
-                end
-                end
-                end
-                end
-                set $_getfunargadr_argAdr = $_getfunargadr_argAdr + $_getfunargadr_argSize
-                set $_getfunargadr_argIndex = $_getfunargadr_argIndex + 1
+        if $arg1 == 1
+            set $$arg0 = (SEL *)($esp + sizeof(int *) + sizeof(id))
+        # Other parameters
+        else
+            # Extract object and selector first
+            _getfunargadr _getfunargadr_pSelf 0
+            _getfunargadr _getfunargadr_pSelector 1
+        
+            # Retrieve the class and method information from the Objective-C runtime
+            set $_getfunargadr_class = (Class)object_getClass(*$_getfunargadr_pSelf)
+        
+            # Class or instance method?
+            if ((int)class_isMetaClass($_getfunargadr_class))
+                set $_getfunargadr_method = (Method)class_getClassMethod($_getfunargadr_class, *$_getfunargadr_pSelector)
+            else
+                set $_getfunargadr_method = (Method)class_getInstanceMethod($_getfunargadr_class, *$_getfunargadr_pSelector)
             end
+        
+            # Sanity check
+            set $_getfunargadr_methodNbrArgs = (unsigned int)method_getNumberOfArguments($_getfunargadr_method) 
+            if $arg1 >= $_getfunargadr_methodNbrArgs
+                printf "Incorrect index (must be < %d)", $_getfunargadr_methodNbrArgs
+            else
+                # Calculate the address of the requested parameter
+                set $_getfunargadr_argAdr = $esp + sizeof(int *) + sizeof(id) + sizeof(SEL)
+                set $_getfunargadr_argIndex = 2
+                while ($arg1 - $_getfunargadr_argIndex)
+                    # Refer to http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html
+                    # for type encodings
+                    set $_getfunargadr_argType = (char *)method_copyArgumentType($_getfunargadr_method, $_getfunargadr_argIndex)
+               
+                    # Increment the offset according to the argument size
+                    printf "Type of arg %d is %s\n", $_getfunargadr_argIndex, $_getfunargadr_argType
+                    _aligned_sizeof_for_encoding _getfunargadr_argSize $_getfunargadr_argType
+                    set $_getfunargadr_argAdr = $_getfunargadr_argAdr + $_getfunargadr_argSize
+                
+                    set $_getfunargadr_argIndex = $_getfunargadr_argIndex + 1
+                end
+            end
+        
+            printf "Offset: %d\n", $_getfunargadr_argAdr - $esp
+        
+            # Can now return the calculated parameter address
+            set $$arg0 = (int *)$_getfunargadr_argAdr
         end
-        
-        printf "Offset: %d\n", $_getfunargadr_argAdr - $esp
-        
-        # Can now return the calculated parameter address
-        set $$arg0 = (int *)$_getfunargadr_argAdr
+        end
+        end
+    else
+        help _getfunargadr
     end
-    end
-    end
-else
-    help _getfunargadr
-end
 end
 
 document _getfunargadr
@@ -485,23 +506,23 @@ end
 # ----------------------------------------------------------------------------------------------
 
 define sci
-if $argc == 0
-    # Deal with prototypes having id as first argument and SEL as second one. This is the case
-    # for 
-    #     objc_msgSend(id self, SEL op, ...)
-    # as well as any Objective-C method implementation:
-    #     typedef id (*IMP)(id, SEL, ...); 
-    # Using the sci command, we can therefore get information about the selector which is called
-    # when we stop on on objc_msgSend, but  also when we stop on any Objective-C method call. Nice,
-    # isn't it?
-    _getfunargadr _sci_pSelf 0
-    _getfunargadr _sci_pSelector 1   
+    if $argc == 0
+        # Deal with prototypes having id as first argument and SEL as second one. This is the case
+        # for 
+        #     objc_msgSend(id self, SEL op, ...)
+        # as well as any Objective-C method implementation:
+        #     typedef id (*IMP)(id, SEL, ...); 
+        # Using the sci command, we can therefore get information about the selector which is called
+        # when we stop on on objc_msgSend, but  also when we stop on any Objective-C method call. Nice,
+        # isn't it?
+        _getfunargadr _sci_pSelf 0
+        _getfunargadr _sci_pSelector 1   
     
-    # Must be careful enough here NOT to use message sending (would be recursive!)
-    printf "Message %s sent to <%s: %p>\n", *$_sci_pSelector, (const char *)object_getClassName(*$_sci_pSelf), *$_sci_pSelf
-else
-    help sci
-end
+        # Must be careful enough here NOT to use message sending (would be recursive!)
+        printf "Message %s sent to <%s: %p>\n", *$_sci_pSelector, (const char *)object_getClassName(*$_sci_pSelf), *$_sci_pSelf
+    else
+        help sci
+    end
 end
 
 document sci
@@ -707,15 +728,15 @@ end
 # ----------------------------------------------------------------------------------------------
 
 define xa
-# Check the first argument
-if ($argc == 2 && "$arg0"[0] == '/')
-    # No type argument to _getfunargadr. Only interested in the address, cast will be made
-    # by x/<type> below
-    _getfunargadr _xa_pArg $arg1
-    x $arg0 $_xa_pArg
-else
-    help xa
-end
+    # Check the first argument
+    if ($argc == 2 && "$arg0"[0] == '/')
+        # No type argument to _getfunargadr. Only interested in the address, cast will be made
+        # by x/<type> below
+        _getfunargadr _xa_pArg $arg1
+        x $arg0 $_xa_pArg
+    else
+        help xa
+    end
 end
 
 document xa
