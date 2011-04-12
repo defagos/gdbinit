@@ -1,5 +1,6 @@
+#import "gdbinit_utils.h"
+
 #include "ctype.h"
-#include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
 
@@ -17,7 +18,11 @@
 static size_t aligned_sizeof(size_t size);
 static size_t gdbinit_utils_next_subtype_length(char *str);
 static size_t gdbinit_utils_sizeof_composite(char *type, int composite);
-size_t gdbinit_utils_sizeof(char *type);
+
+size_t gdbinit_utils_sizeof(char *type)
+{
+    return gdbinit_utils_sizeof_composite(type, TRUE);
+}
 
 /**
  * Return a size correct with respect to alignment and architecture
@@ -37,8 +42,17 @@ static size_t aligned_sizeof(size_t size)
  */
 static size_t gdbinit_utils_next_subtype_length(char *str)
 {   
+    // Pointer
+    if (*str == '^') {
+        size_t pointer_type_length = gdbinit_utils_next_subtype_length(str + 1);
+        if (pointer_type_length == 0) {
+            printf("[ERROR] Missing pointee type\n");
+            return 0;
+        }
+        return 1 + pointer_type_length;
+    }
     // C-array
-    if (*str == '[') {
+    else if (*str == '[') {
         char *end_pos = strrchr(str + 1, ']');
         if (end_pos) {
             // Check that length information is available
@@ -135,17 +149,7 @@ static size_t gdbinit_utils_sizeof_composite(char *type, int composite)
         
         // Pointer
         if (*subtype == '^') {
-            // Discard the pointee type information; not interesting
-            pos += next_subtype_length;
-            next_subtype_length = gdbinit_utils_next_subtype_length(pos);
-            if (next_subtype_length != 0) {
-                size += ALIGNED_SIZEOF(void *);
-            }
-            else {
-                printf("[ERROR] Missing pointer type at index %ld\n", index);
-                free(subtype);
-                return 0;
-            }
+            size += ALIGNED_SIZEOF(void *);
         }
         // C-array
         else if (*subtype == '[') {
@@ -250,9 +254,4 @@ static size_t gdbinit_utils_sizeof_composite(char *type, int composite)
     }
     
     return size;
-}
-
-size_t gdbinit_utils_sizeof(char *type)
-{
-    return gdbinit_utils_sizeof_composite(type, TRUE);
 }
