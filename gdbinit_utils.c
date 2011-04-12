@@ -9,12 +9,15 @@
 //   -> Yep! This is at least possible using internal variables and the preproc
 //      ifdef, passing some preproc macro when building for the device
 
+// TODO: Ok, I should really have used a parser and a grammar here. Maybe later
+
 #define ALIGNED_SIZEOF(type)                aligned_sizeof(sizeof(type))
 
 #define FALSE                               0
 #define TRUE                                1
 
 // Function declarations
+static char *gdbinit_utils_find_closing_bracket(char *str, char bracket);
 static size_t aligned_sizeof(size_t size);
 static size_t gdbinit_utils_next_subtype_length(char *str);
 static size_t gdbinit_utils_sizeof_composite(char *type, int composite);
@@ -22,6 +25,49 @@ static size_t gdbinit_utils_sizeof_composite(char *type, int composite);
 size_t gdbinit_utils_sizeof(char *type)
 {
     return gdbinit_utils_sizeof_composite(type, TRUE);
+}
+
+/**
+ * Starting from str, find the next closing bracket for the one given as parameter. Return
+ * NULL if not found
+ */
+static char *gdbinit_utils_find_closing_bracket(char *str, char opening_bracket)
+{
+    char closing_bracket;
+    switch (opening_bracket) {
+        case '(':
+            closing_bracket = ')';
+            break;
+            
+        case '[':
+            closing_bracket = ']';
+            break;
+        
+        case '{':
+            closing_bracket = '}';
+            break;
+            
+        default:
+            printf("[ERROR] Unsupported bracket");
+            return NULL;
+            break;
+    }
+    
+    int bracket_pairs = 1;
+    char *pos = str;
+    while (*pos != '\0') {
+        if (*pos == opening_bracket) {
+            ++bracket_pairs;
+        }
+        else if (*pos == closing_bracket) {
+            --bracket_pairs;
+            if (bracket_pairs == 0) {
+                return pos;
+            }
+        }
+        ++pos;
+    }
+    return NULL;
 }
 
 /**
@@ -53,7 +99,7 @@ static size_t gdbinit_utils_next_subtype_length(char *str)
     }
     // C-array
     else if (*str == '[') {
-        char *end_pos = strrchr(str + 1, ']');
+        char *end_pos = gdbinit_utils_find_closing_bracket(str + 1, '[');
         if (end_pos) {
             // Check that length information is available
             char *array_subtype_pos = str + 1;
@@ -62,7 +108,8 @@ static size_t gdbinit_utils_next_subtype_length(char *str)
             }
             if (array_subtype_pos != str + 1) {
                 // Check the type string format (do not use it, though; not needed!)
-                size_t array_type_length = (char *)(str + strlen(str) - 1) - array_subtype_pos;
+//                size_t array_type_length = (char *)(str + strlen(str) - 1) - array_subtype_pos;
+                size_t array_type_length = end_pos - array_subtype_pos;
                 char *array_type = calloc(array_type_length + 1, sizeof(char));
                 strncpy(array_type, array_subtype_pos, array_type_length);
                 if (gdbinit_utils_sizeof_composite(array_type, FALSE) == 0) {
@@ -86,7 +133,7 @@ static size_t gdbinit_utils_next_subtype_length(char *str)
     }
     // C-struct
     else if (*str == '{') {
-        char *end_pos = strrchr(str + 1, '}');
+        char *end_pos = gdbinit_utils_find_closing_bracket(str + 1, '{');
         if (end_pos) {
             return end_pos - str + 1;
         }
@@ -97,7 +144,7 @@ static size_t gdbinit_utils_next_subtype_length(char *str)
     }
     // Union
     else if (*str == '(') {
-        char *end_pos = strrchr(str + 1, ')');
+        char *end_pos = gdbinit_utils_find_closing_bracket(str + 1, '(');
         if (end_pos) {
             return end_pos - str + 1;
         }
