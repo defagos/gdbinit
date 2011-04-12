@@ -10,6 +10,18 @@
 
 #define ALIGNED_SIZEOF(type)                aligned_sizeof(sizeof(type))
 
+#define FALSE                               0
+#define TRUE                                1
+
+// Function declarations
+static size_t aligned_sizeof(size_t size);
+static size_t gdbinit_utils_next_subtype_length(char *str);
+static size_t gdbinit_utils_sizeof_composite(char *type, int composite);
+size_t gdbinit_utils_sizeof(char *type);
+
+/**
+ * Return a size correct with respect to alignment and architecture
+ */
 static size_t aligned_sizeof(size_t size)
 {
     size_t aligned_size = (size / sizeof(void *)) * sizeof(void *);
@@ -20,7 +32,7 @@ static size_t aligned_sizeof(size_t size)
 }
 
 /**
- * Find the next sub-type at the beginning of the str string, and return
+ * Find the next well-formed sub-type at the beginning of the str string, and return
  * its length (or 0 if none was found) 
  */
 static size_t gdbinit_utils_next_subtype_length(char *str)
@@ -29,6 +41,28 @@ static size_t gdbinit_utils_next_subtype_length(char *str)
     if (*str == '[') {
         char *end_pos = strrchr(str + 1, ']');
         if (end_pos) {
+            // Check that length information is available
+            char *array_subtype_pos = str + 1;
+            while (isdigit(*array_subtype_pos)) {
+                ++array_subtype_pos;
+            }
+            if (array_subtype_pos != str + 1) {
+                // Check the type string format (do not use it, though; not needed!)
+                size_t array_type_length = (char *)(str + strlen(str) - 1) - array_subtype_pos;
+                char *array_type = calloc(array_type_length + 1, sizeof(char));
+                strncpy(array_type, array_subtype_pos, array_type_length);
+                if (gdbinit_utils_sizeof_composite(array_type, FALSE) == 0) {
+                    printf("[ERROR] Incorrect object size in array\n");
+                    free(array_type);
+                    return 0;
+                }
+                free(array_type);
+            }
+            else {
+                printf("[ERROR] Missing array length information at index\n");
+                return 0;
+            }
+            
             return end_pos - str + 1;
         }
         else {
@@ -82,8 +116,11 @@ static size_t gdbinit_utils_next_subtype_length(char *str)
 /**
  * Take a string encoding as input (e.g. lq{?=icq{?=cid}^i}c) and returns the total
  * corresponding size
+ * If composite is set to TRUE, then the type we calculate the sizeof can be a composite
+ * of several subtypes (e.g. iQ, cdl), otherwise only a single subtype must be found
+ * (e.g. i, ^i, [15l])
  */
-size_t gdbinit_utils_sizeof(char *type)
+static size_t gdbinit_utils_sizeof_composite(char *type, int composite)
 {
     size_t size = 0;
     char *pos = type;
@@ -113,29 +150,6 @@ size_t gdbinit_utils_sizeof(char *type)
         // C-array
         else if (*subtype == '[') {
             size += ALIGNED_SIZEOF(void *);
-            // Check that length information is available
-            char *array_subtype_pos = subtype + 1;
-            while (isdigit(*array_subtype_pos)) {
-                ++array_subtype_pos;
-            }
-            if (array_subtype_pos != subtype + 1) {
-                // Check the type string format (do not use it, though; not needed!)
-                size_t array_type_length = (char *)(subtype + next_subtype_length - 1) - array_subtype_pos;
-                char *array_type = calloc(array_type_length + 1, sizeof(char));
-                strncpy(array_type, array_subtype_pos, array_type_length);
-                if (gdbinit_utils_sizeof(array_type) == 0) {
-                    printf("[ERROR] Incorrect object size in array at index %ld\n", index);
-                    free(array_type);
-                    free(subtype);
-                    return 0;
-                }
-                free(array_type);
-            }
-            else {
-                printf("[ERROR] Missing array length information at index %ld\n", index);
-                free(subtype);
-                return 0;
-            }
         }
         // C-struct
         else if (*subtype == '{') {
@@ -147,7 +161,7 @@ size_t gdbinit_utils_sizeof(char *type)
                 size_t struct_type_length = next_subtype_length - (equal_pos - subtype) - 2;
                 char *struct_type = calloc(struct_type_length + 1, sizeof(char));
                 strncpy(struct_type, equal_pos + 1, struct_type_length);
-                size += gdbinit_utils_sizeof(struct_type);
+                size += gdbinit_utils_sizeof_composite(struct_type, TRUE);
                 free(struct_type);
                 if (size == 0) {
                     printf("[ERROR] Invalid size of zero for struct defined at index %ld\n", index);
@@ -222,8 +236,12 @@ size_t gdbinit_utils_sizeof(char *type)
         
         // Ready for reading next subtype
         pos += next_subtype_length;
-        index = pos - type;
         next_subtype_length = gdbinit_utils_next_subtype_length(pos);
+        if (! composite && next_subtype_length != 0) {
+            printf("[ERROR] The type at index %ld cannot be a composite\n", index);
+            return 0;
+        }
+        index = pos - type;
     }
     
     if (*pos != '\0') {
@@ -234,8 +252,7 @@ size_t gdbinit_utils_sizeof(char *type)
     return size;
 }
 
-int main(int argc, char *argv[])
+size_t gdbinit_utils_sizeof(char *type)
 {
-    size_t s = gdbinit_utils_sizeof(argv[1]);
-    printf("%ld\n", s);
+    return gdbinit_utils_sizeof_composite(type, TRUE);
 }
