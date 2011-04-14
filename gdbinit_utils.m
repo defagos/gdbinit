@@ -1,8 +1,10 @@
 #import "gdbinit_utils.h"
 
-#include "ctype.h"
-#include "stdlib.h"
-#include "string.h"
+#import "ctype.h"
+#import "stdlib.h"
+#import "string.h"
+
+#import <objc/runtime.h>
 
 // TODO: Is it possible to write a function which can return if we are running into
 //       the simulator or the device?
@@ -11,6 +13,7 @@
 
 // TODO: Ok, I should really have used a parser and a grammar here. Maybe later
 
+// TODO: - Use NSGetSizeAndAlignment instead
 #define ALIGNED_SIZEOF(type)                aligned_sizeof(sizeof(type))
 
 #define FALSE                               0
@@ -27,6 +30,12 @@ size_t gdbinit_utils_sizeof(char *type)
     return gdbinit_utils_sizeof_composite(type, TRUE);
 }
 
+BOOL gdbinit_utils_print_method(void *stack_address)
+{
+    // TODO: Implementation
+    return YES;
+}
+
 /**
  * Starting from str, find the next closing bracket for the one given as parameter. Return
  * NULL if not found
@@ -35,16 +44,16 @@ static char *gdbinit_utils_find_closing_bracket(char *str, char opening_bracket)
 {
     char closing_bracket;
     switch (opening_bracket) {
-        case '(':
-            closing_bracket = ')';
+        case _C_UNION_B:
+            closing_bracket = _C_UNION_E;
             break;
             
-        case '[':
-            closing_bracket = ']';
+        case _C_ARY_B:
+            closing_bracket = _C_ARY_E;
             break;
         
-        case '{':
-            closing_bracket = '}';
+        case _C_STRUCT_B:
+            closing_bracket = _C_STRUCT_E;
             break;
             
         default:
@@ -89,7 +98,7 @@ static size_t aligned_sizeof(size_t size)
 static size_t gdbinit_utils_next_subtype_length(char *str)
 {   
     // Pointer
-    if (*str == '^') {
+    if (*str == _C_PTR) {
         size_t pointer_type_length = gdbinit_utils_next_subtype_length(str + 1);
         if (pointer_type_length == 0) {
             printf("[ERROR] Missing pointee type\n");
@@ -98,8 +107,8 @@ static size_t gdbinit_utils_next_subtype_length(char *str)
         return 1 + pointer_type_length;
     }
     // C-array
-    else if (*str == '[') {
-        char *end_pos = gdbinit_utils_find_closing_bracket(str + 1, '[');
+    else if (*str == _C_ARY_B) {
+        char *end_pos = gdbinit_utils_find_closing_bracket(str + 1, _C_ARY_B);
         if (end_pos) {
             // Check that length information is available
             char *array_subtype_pos = str + 1;
@@ -108,7 +117,6 @@ static size_t gdbinit_utils_next_subtype_length(char *str)
             }
             if (array_subtype_pos != str + 1) {
                 // Check the type string format (do not use it, though; not needed!)
-//                size_t array_type_length = (char *)(str + strlen(str) - 1) - array_subtype_pos;
                 size_t array_type_length = end_pos - array_subtype_pos;
                 char *array_type = calloc(array_type_length + 1, sizeof(char));
                 strncpy(array_type, array_subtype_pos, array_type_length);
@@ -127,35 +135,35 @@ static size_t gdbinit_utils_next_subtype_length(char *str)
             return end_pos - str + 1;
         }
         else {
-            printf("[ERROR] Incorrect type syntax: Missing ']'\n");
+            printf("[ERROR] Incorrect type syntax: Missing '%c'\n", _C_ARY_E);
             return 0;
         }
     }
     // C-struct
-    else if (*str == '{') {
-        char *end_pos = gdbinit_utils_find_closing_bracket(str + 1, '{');
+    else if (*str == _C_STRUCT_B) {
+        char *end_pos = gdbinit_utils_find_closing_bracket(str + 1, _C_STRUCT_B);
         if (end_pos) {
             return end_pos - str + 1;
         }
         else {
-            printf("[ERROR] Incorrect type syntax: Missing '}'\n");
+            printf("[ERROR] Incorrect type syntax: Missing '%c'\n", _C_STRUCT_E);
             return 0;
         }
     }
     // Union
-    else if (*str == '(') {
-        char *end_pos = gdbinit_utils_find_closing_bracket(str + 1, '(');
+    else if (*str == _C_UNION_B) {
+        char *end_pos = gdbinit_utils_find_closing_bracket(str + 1, _C_UNION_B);
         if (end_pos) {
             return end_pos - str + 1;
         }
         else {
-            printf("[ERROR] Incorrect type syntax: Missing ')'\n");
+            printf("[ERROR] Incorrect type syntax: Missing '%c'\n", _C_UNION_E);
             return 0;
         }
         return end_pos ? end_pos - str + 1 : 0;
     }
     // Bit field
-    else if (*str == 'b') {
+    else if (*str == _C_BFLD) {
         char *end_pos = str + 1;
         while (isdigit(*end_pos)) {
             ++end_pos;
@@ -195,15 +203,15 @@ static size_t gdbinit_utils_sizeof_composite(char *type, int composite)
         strncpy(subtype, pos, next_subtype_length);
         
         // Pointer
-        if (*subtype == '^') {
+        if (*subtype == _C_PTR) {
             size += ALIGNED_SIZEOF(void *);
         }
         // C-array
-        else if (*subtype == '[') {
+        else if (*subtype == _C_ARY_B) {
             size += ALIGNED_SIZEOF(void *);
         }
         // C-struct
-        else if (*subtype == '{') {
+        else if (*subtype == _C_STRUCT_B) {
             // Find the C-struct type string; not always specified if pointer to
             // pointer to struct (see Type Encodings in the Objective-C Runtime 
             // Programming guide)
@@ -222,58 +230,67 @@ static size_t gdbinit_utils_sizeof_composite(char *type, int composite)
             }
         }
         // Union
-        else if (*subtype == '(') {
+        else if (*subtype == _C_UNION_B) {
             // TODO: Probably find max of sizeofs
         }
         // Bit field
-        else if (*subtype == 'b') {
+        else if (*subtype == _C_BFLD) {
             // TODO: Probably number of bits, aligned
         }
         // Other pointer types
-        else if (strchr("@*#:", *subtype)) {
+        else if (*subtype == _C_ID
+                 || *subtype == _C_CHARPTR
+                 || *subtype == _C_CLASS
+                 || *subtype == _C_SEL) {
             size += ALIGNED_SIZEOF(void *);
         }
         // Int
-        else if (strchr("iI", *subtype)) {
+        else if (*subtype == _C_INT
+                 || *subtype == _C_UINT) {
             size += ALIGNED_SIZEOF(int);
         }
         // Short
-        else if (strchr("sS", *subtype)) {
+        else if (*subtype == _C_SHT
+                 || *subtype == _C_USHT) {
             size += ALIGNED_SIZEOF(short);
         }
         // Long
-        else if (strchr("lL", *subtype)) {
+        else if (*subtype == _C_LNG
+                 || *subtype == _C_ULNG) {
             size += ALIGNED_SIZEOF(long);
         }
         // Long long
-        else if (strchr("qQ", *subtype)) {
+        else if (*subtype == _C_LNG_LNG
+                 || *subtype == _C_ULNG_LNG) {
             size += ALIGNED_SIZEOF(long long);
         }
         // Character
-        else if (strchr("cC", *subtype)) {
+        else if (*subtype == _C_CHR
+                 || *subtype == _C_UCHR) {
             size += ALIGNED_SIZEOF(char);
         }
         // Float
-        else if (*subtype == 'f') {
+        else if (*subtype == _C_FLT) {
             size += ALIGNED_SIZEOF(float);
         }
         // Double
-        else if (*subtype == 'd') {
+        else if (*subtype == _C_DBL) {
             size += ALIGNED_SIZEOF(double);
         }
         // Boolean: Only for C99 or C++ (see Type Encodings in the Objective-C Runtime 
         // Programming guide)
 #if __STDC_VERSION__ >= 199901L
-        else if (*subtype == 'B') {
+        else if (*subtype == _C_BOOL) {
             size += ALIGNED_SIZEOF(_Bool);
         }
 #elif defined(__cplusplus)
-        else if (*subtype == 'B') {
+        else if (*subtype == _C_BOOL) {
             size += ALIGNED_SIZEOF(bool);
         }
 #endif
         // Void or unknown: Use "natural" size
-        else if (strchr("v?", *subtype)){
+        else if (*subtype == _C_VOID
+                 || *subtype == _C_UNDEF) {
             size += ALIGNED_SIZEOF(void *);
         }
         // Unsupported type; should never happen

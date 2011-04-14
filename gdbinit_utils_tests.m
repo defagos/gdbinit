@@ -82,4 +82,6 @@ int main(int argc, char *argv[])
     assert(gdbinit_utils_sizeof("{i}") == 0);
     // TODO: =<type> in struct not mandatory iff ^^
 #endif
+    
+    printf("\nAll tests successfully passed\n");
 }

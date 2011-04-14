@@ -396,7 +396,7 @@ define _getfunargadr
         # SEL parameter
         else
         if $arg1 == 1
-            set $$arg0 = (SEL *)($esp + sizeof(int *) + sizeof(id))
+            set $$arg0 = (SEL *)($esp + sizeof(int *) + sizeof(id *))
         # Other parameters
         else
             # Extract object and selector first
@@ -419,7 +419,7 @@ define _getfunargadr
                 printf "Incorrect index (must be < %d)", $_getfunargadr_methodNbrArgs
             else
                 # Calculate the address of the requested parameter
-                set $_getfunargadr_argAdr = $esp + sizeof(int *) + sizeof(id) + sizeof(SEL)
+                set $_getfunargadr_argAdr = $esp + sizeof(int *) + sizeof(id *) + sizeof(SEL *)
                 set $_getfunargadr_argIndex = 2
                 while ($arg1 - $_getfunargadr_argIndex)
                     # Refer to http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html
